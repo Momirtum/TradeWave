@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradePro Login</title>
+    <link rel="stylesheet" href="~/css/Login.css">
+</head>
+<body>
+    <div class="left-side">
+        TradeWave
+    </div>
+
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h2>Welcome Back!</h2>
+            <p>Login to access your account</p>
+
+            <form method="post" action="/Home/Login">
+                <input type="email" name="email" placeholder="Email address" required>
+                <input type="password" name="password" placeholder="Password" required>
+
+                <div class="options">
+                    <label><input type="checkbox"> Remember me</label>
+                    <a href="#">Forgot password?</a>
+                </div>
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                <button type="submit" class="submit">Sign In</button>
+            </form>
+
+            <p>Don't have an account? <a asp-controller="Home" asp-action="Register" >Sign up</a></p>
+        </div>
+    </div>
+</body>
+</html>

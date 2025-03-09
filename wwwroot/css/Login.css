@@ -1,0 +1,178 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+}
+
+.left-side {
+    background-color: #4a30d0; /* Change this to any color you like */
+    width: 30%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    position: absolute;
+    left: 0;
+}
+
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    margin-left: 30%; /* This ensures the login box takes 70% of the width */
+}
+
+.login-box {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 350px;
+}
+
+.logo {
+    font-weight: 600;
+    color: #333;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+    .logo img {
+        width: 25px;
+    }
+
+h2 {
+    color: #222;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+p {
+    color: #777;
+    font-size: 14px;
+}
+
+.social-login {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+    .social-login button {
+        border: 1px solid #ddd;
+        background: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: background 0.3s, transform 0.2s;
+    }
+
+        .social-login button:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input {
+    padding: 12px;
+    margin: 6px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border 0.3s;
+}
+
+    input:focus {
+        border-color: #4a30d0;
+        outline: none;
+    }
+
+.options {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #555;
+}
+
+    .options a {
+        color: #4a30d0;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+        .options a:hover {
+            color: #3722a8;
+        }
+
+button.submit {
+    background: #4a30d0;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.3s, transform 0.2s;
+}
+
+    button.submit:hover {
+        background: #3722a8;
+        transform: scale(1.05);
+    }
+
+.divider {
+    margin: 15px 0;
+    font-size: 13px;
+    color: gray;
+    position: relative;
+}
+
+    .divider:before, .divider:after {
+        content: "";
+        height: 1px;
+        width: 40%;
+        background: #ddd;
+        position: absolute;
+        top: 50%;
+    }
+
+    .divider:before {
+        left: 0;
+    }
+
+    .divider:after {
+        right: 0;
+    }
