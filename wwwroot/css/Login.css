@@ -176,16 +176,30 @@ button.submit {
     .divider:after {
         right: 0;
     }
-.ProductName {
-    font-size: 82px;
-    font-weight: 600;
-    color: #fff;
-    position: absolute;
-    margin-bottom: 25rem;
-    font-family: "Kanit", sans-serif !important;
-    font-weight: 700;
-    font-style: normal;
-}
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px); /* Hafif yukarıdan başlat */
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .ProductName {
+        font-size: 82px;
+        font-weight: 600;
+        color: #fff;
+        position: absolute;
+        margin-bottom: 25rem;
+        font-family: "Kanit", sans-serif !important;
+        font-weight: 700;
+        font-style: normal;
+        opacity: 0; /* Başlangıçta görünmez */
+        animation: fadeIn 1.5s ease-out forwards;
+    }
+    
 .left-side>img {
     width: 100%;
     height: 100%;
