@@ -19,7 +19,7 @@ body {
 
 .left-side {
     background-color: #4a30d0; /* Change this to any color you like */
-    width: 30%;
+    width: 50%;
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -37,7 +37,7 @@ body {
     align-items: center;
     width: 100%;
     height: 100vh;
-    margin-left: 30%; /* This ensures the login box takes 70% of the width */
+    margin-left: 50%; /* This ensures the login box takes 70% of the width */
 }
 
 .login-box {
@@ -176,3 +176,18 @@ button.submit {
     .divider:after {
         right: 0;
     }
+.ProductName {
+    font-size: 82px;
+    font-weight: 600;
+    color: #fff;
+    position: absolute;
+    margin-bottom: 25rem;
+    font-family: "Kanit", sans-serif !important;
+    font-weight: 700;
+    font-style: normal;
+}
+.left-side>img {
+    width: 100%;
+    height: 100%;
+    object-fit:cover;
+}
