@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using tradeWave.Models;
+using TradeWave.Models;
 using TradeWave.Data;
 
 var builder = WebApplication.CreateBuilder(args);
