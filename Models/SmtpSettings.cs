@@ -1,4 +1,4 @@
-namespace tradeWave.Models
+namespace TradeWave.Models
 {
     public class SmtpSettings
     {

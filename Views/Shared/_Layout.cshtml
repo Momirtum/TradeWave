@@ -9,44 +9,242 @@
     <link rel="stylesheet" href="~/TradeWave.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TradeWave</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Logout">Logout</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+    <header class="navbar">
+        <div class="logo"><span>Trade</span><span class="highlight">Wave</span></div>
+        <nav class="nav-links">
+            <a href="#">Markets</a>
+            <a href="#">Trade</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
         </nav>
+        <div class="navbar-right">
+            <div class="mobile-menu-toggle">&#9776;</div>
+            <div class="profile-photo">ET</div>
+        </div>
+        
     </header>
+
+    <div class="profile-dropdown">
+        <a href="#">Profile</a>
+        <a href="#">Settings</a>
+        <a href="#">Logout</a>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <a href="#">Markets</a>
+        <a href="#">Trade</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+    </div>
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - TradeWave - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer style="background-color: #f9fafb; font-family: sans-serif; color: #374151;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; max-width: 1200px; margin: auto; padding: 40px 20px;">
+            <!-- ExchangeHub Description -->
+            <div style="flex: 1; min-width: 200px;">
+                <h4 style="font-weight: 600; font-size: 16px; margin-bottom: 12px;">ExchangeHub</h4>
+                <p style="color: #6b7280; font-size: 14px;">The most trusted cryptocurrency exchange platform since 2025.</p>
+            </div>
+
+            <!-- Products -->
+            <div style="flex: 1; min-width: 160px;">
+                <h4 style="font-weight: 600; font-size: 16px; margin-bottom: 12px;">Products</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li><a href="#" style="color: #4b5563; font-size: 14px; text-decoration: none;">Exchange</a></li>
+                    <li><a href="#" style="color: #4b5563; font-size: 14px; text-decoration: none;">Institutional</a></li>
+                    <li><a href="#" style="color: #4b5563; font-size: 14px; text-decoration: none;">API</a></li>
+                </ul>
+            </div>
+
+            <!-- Company -->
+            <div style="flex: 1; min-width: 160px;">
+                <h4 style="font-weight: 600; font-size: 16px; margin-bottom: 12px;">Company</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li><a href="#" style="color: #4b5563; font-size: 14px; text-decoration: none;">About</a></li>
+                    <li><a href="#" style="color: #4b5563; font-size: 14px; text-decoration: none;">Careers</a></li>
+                    <li><a href="#" style="color: #4b5563; font-size: 14px; text-decoration: none;">Press</a></li>
+                </ul>
+            </div>
+
+            <!-- Connect -->
+            <div style="flex: 1; min-width: 160px;">
+                <h4 style="font-weight: 600; font-size: 16px; margin-bottom: 12px;">Connect</h4>
+                <div style="display: flex; gap: 12px; font-size: 18px;">
+                    <a href="#" style="color: #4b5563;"><i class="fab fa-twitter"></i></a>
+                    <a href="#" style="color: #4b5563;"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" style="color: #4b5563;"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
         </div>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 20px;" />
+
+        <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 14px;">
+            © 2025 TradeWave. All rights reserved.
+        </div>
+
+        <!-- Font Awesome -->
+        <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: sans-serif;
+    }
+
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 32px;
+        background-color: white;
+        border-bottom: 1px solid #e2e8f0;
+        position: relative;
+    }
+
+    .logo {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .logo .highlight {
+        color: #4b5563;
+        font-weight: normal;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 24px;
+    }
+
+    .nav-links a {
+        text-decoration: none;
+        color: #1f2937;
+        font-size: 14px;
+    }
+
+    .mobile-menu-toggle {
+        display: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    /* Mobile Menu */
+    .mobile-menu {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        background-color: white;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .mobile-menu a {
+        text-decoration: none;
+        color: #1f2937;
+        font-size: 14px;
+    }
+
+    .navbar-right{
+        display : flex;
+        align-items: center;
+    }
+
+    .profile-photo{
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		background-color: #4b5563;
+		color: white;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 16px;
+		margin-left: 24px;
+	}
+
+    .profile-dropdown {
+        display: none;
+        position: absolute;
+        top: 72px; /* navbar yüksekliği + padding */
+        right: 32px;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        padding: 8px 0;
+        width: 150px;
+        z-index: 1000;
+        flex-direction: column;
+    }
+
+    .profile-dropdown a {
+        padding: 10px 16px;
+        display: block;
+        text-decoration: none;
+        color: #1f2937;
+        font-size: 14px;
+    }
+
+    .profile-dropdown a:hover {
+        background-color: #f3f4f6;
+    }
+
+    /* aktif olduğunda göster */
+    .profile-dropdown.active {
+        display: flex;
+    }
+
+
+    @@media (max-width: 768px) {
+        .nav-links {
+            display: none;
+        }
+
+        .mobile-menu-toggle {
+            display: block;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+    }
+</style>
+<script>
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    const profilePhoto = document.querySelector('.profile-photo');
+    const profileDropdown = document.querySelector('.profile-dropdown');
+
+    toggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('active');
+    });
+
+    profilePhoto.addEventListener('click', () => {
+        profileDropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!profilePhoto.contains(e.target) && !profileDropdown.contains(e.target)) {
+            profileDropdown.classList.remove('active');
+        }
+    });
+</script>
+
 </html>
