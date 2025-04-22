@@ -1,13 +1,11 @@
-@using tradeWave.Models
-@model ResetPasswordViewModel
-
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "SendMail";
     Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +13,11 @@
     <link rel="stylesheet" href="~/css/Login.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Ubuntu:wght@700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kanit:wght@700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Ubuntu:wght@700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div class="left-side">
         <div class="ProductName">TradeWave</div>
@@ -26,23 +27,20 @@
     <div class="login-wrapper">
         <div class="login-box">
             <h2>Welcome Back!</h2>
-            <p>Login to access your account</p>
 
-            <form method="post" action="/Home/ForgotPassword">
-                <input type="hidden" asp-for="Token">
-                <input type="password" name="NewPassword" placeholder="Password" required>
-                <input type="password" name="ConfirmPassword" placeholder="Confirm Password" required>
-                @if (ViewBag.Error != null)
+            <form method="post" asp-controller="Home" asp-action="SendMail">
+                <input type="email" name="email" placeholder="Email address" required>
+
+                @if (!string.IsNullOrEmpty(ViewBag.Error))
                 {
                     <div class="alert alert-danger">
                         @ViewBag.Error
                     </div>
                 }
 
-                <button type="submit" class="submit">Reset Password</button>
+                <button class="submit" type="submit">Send Mail</button>
             </form>
-
-            <p>Don't have an account? <a asp-controller="Home" asp-action="Register" >Sign up</a></p>
+            <p>Don't have an account? <a asp-controller="Home" asp-action="Register">Sign up</a></p>
         </div>
     </div>
 </body>

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Globalization;
+using tradeWave.Models;
 
 namespace TradeWave.Controllers
 {
@@ -37,6 +37,16 @@ namespace TradeWave.Controllers
         }
         [AllowAnonymous]
         public IActionResult ForgotPassword()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View();
+        }
+        [AllowAnonymous]
+        public IActionResult SendMail()
         {
             if (User.Identity.IsAuthenticated)
             {
@@ -80,10 +90,10 @@ namespace TradeWave.Controllers
             }
 
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.Name + " " + user.Surname),
-        new Claim(ClaimTypes.Email, user.Email)
-    };
+            {
+                new Claim(ClaimTypes.Name, user.Name + " " + user.Surname),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
@@ -136,15 +146,50 @@ namespace TradeWave.Controllers
             return Redirect("/Home/Index");
         }
 
-        [HttpPost, AllowAnonymous]
-        public async Task<IActionResult> ForgotPassword(string email, string NewPassword, string confirmPassword)
+        [HttpGet, AllowAnonymous]
+        public IActionResult ForgotPassword(string token)
         {
-            if (NewPassword != confirmPassword)
+            var user = _context.User.FirstOrDefault(u => u.ResetToken == token && u.ResetTokenExpiry > DateTime.UtcNow);
+            if (user == null)
             {
-                ViewBag.Error = "Girdiğiniz şifreler uyuşmuyor";
+                ViewBag.Error = "Geçersiz veya süresi dolmuş token.";
                 return View();
             }
 
+            return View(new ResetPasswordViewModel { Token = token });
+        }
+        [HttpPost, AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword(ResetPasswordViewModel model)
+        {
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                ViewBag.Error = "Şifreler uyuşmuyor.";
+                return View(model);
+            }
+
+            var user = await _context.User.FirstOrDefaultAsync(u => u.ResetToken == model.Token && u.ResetTokenExpiry > DateTime.UtcNow);
+            if (user == null)
+            {
+                ViewBag.Error = "Geçersiz veya süresi dolmuş token.";
+                return View(model);
+            }
+
+            var hashedPassword = HashPassword(model.NewPassword);
+            user.Password = hashedPassword;
+            user.ResetToken = null;
+            user.ResetTokenExpiry = null;
+
+            await _context.SaveChangesAsync();
+
+            // Kullanıcıyı doğrudan giriş yaptır
+            return await Login(user.Email, model.NewPassword);
+        }
+
+
+
+        [HttpPost, AllowAnonymous]
+        public async Task<IActionResult> SendMail(string email, [FromServices] EmailService emailService)
+        {
             var user = await _context.User.FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
@@ -152,11 +197,56 @@ namespace TradeWave.Controllers
                 ViewBag.Error = "Bu mail adresi sistemde kayıtlı değil";
                 return View();
             }
-            user.Password = NewPassword;
+
+            // Token oluştur
+            user.ResetToken = Guid.NewGuid().ToString();
+            user.ResetTokenExpiry = DateTime.UtcNow.AddHours(1);
 
             await _context.SaveChangesAsync();
+
+            // Şifre sıfırlama linkini oluştur
+            var resetLink = Url.Action("ForgotPassword", "Home", new { token = user.ResetToken }, Request.Scheme);
+
+            // Mail içeriği
+            string emailBody = $@"
+    <div style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 40px 0; text-align: center;'>
+        <div style='background-color: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);'>
+
+            <h2 style='color: #2c3e50; font-size: 24px;'>🔒 Şifre Sıfırlama Talebi</h2>
+            
+            <p style='font-size: 16px; color: #555;'>
+                Sayın Kullanıcımız, <br> 
+                Hesabınıza ait şifre sıfırlama işlemi talebinde bulundunuz. 
+                Eğer bu talep size aitse, aşağıdaki butona tıklayarak şifrenizi güvenle sıfırlayabilirsiniz.
+            </p>
+
+            <p>
+                <a href='{resetLink}' 
+                   style='display: inline-block; padding: 15px 30px; font-size: 18px; font-weight: bold; color: white; background: linear-gradient(to right, #007bff, #0056b3); text-decoration: none; border-radius: 6px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); margin-top: 20px;'>🔑 Şifremi Sıfırla</a>
+            </p>
+
+            <p style='margin-top: 20px; font-size: 14px; color: #777;'>
+                ⏳ Bu bağlantı <strong>1 saat</strong> boyunca geçerlidir.  
+                <br> Eğer bu işlemi siz yapmadıysanız, lütfen bu e-postayı dikkate almayın veya  
+                <a href='mailto:support@tradingwave.com' style='color: #007bff; font-weight: bold;'>destek ekibimizle</a> iletişime geçin.
+            </p>
+
+            <hr style='border: 0; height: 1px; background: #ddd; margin: 25px 0;'>
+
+            <p style='font-size: 12px; color: gray;'>© 2024 <strong>TradeWave</strong> | Güvenliğiniz Bizim İçin Önemli</p>
+        </div>
+    </div>";
+
+
+
+
+            // Mail gönder
+            await emailService.SendEmailAsync(user.Email, "Şifre Sıfırlama Talebi", emailBody);
+
+            ViewBag.Message = "Şifre sıfırlama linki e-posta adresinize gönderildi.";
             return Redirect("/Home/Login");
         }
+
         private string HashPassword(string NewPassword)
         {
             using (SHA256 sha256 = SHA256.Create())
@@ -179,4 +269,5 @@ namespace TradeWave.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
+
 }

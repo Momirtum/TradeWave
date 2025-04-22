@@ -8,5 +8,8 @@
         public required string Password { get; set; }
         public string? Email { get; set; }
         public required DateTime CreationDate { get; set; }
+        public string? ResetToken { get; set; }
+        public DateTime? ResetTokenExpiry { get; set; }
+
     }
 }

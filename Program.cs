@@ -1,40 +1,47 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using tradeWave.Models;
 using TradeWave.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Oturum yönetimi ve kimlik doðrulama ekleme
+// SMTP ayarlarÄ±nÄ± ekleyelim
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+
+// EmailService baÄŸÄ±mlÄ±lÄ±ÄŸÄ±nÄ± ekleyelim
+builder.Services.AddTransient<EmailService>();
+
+// Oturum yÃ¶netimi ve kimlik doÄŸrulama ekleme
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);  // Oturum süresi
+    options.IdleTimeout = TimeSpan.FromMinutes(30);  // Oturum sÃ¼resi
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Home/Login";  // Login sayfasýna yönlendirme
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);  // Oturum süresi
-        options.SlidingExpiration = true;  // Oturumun kaybolmadan yeniden aktif olmasý
+        options.LoginPath = "/Home/Login";  // Login sayfasÄ±na yÃ¶nlendirme
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);  // Oturum sÃ¼resi
+        options.SlidingExpiration = true;  // Oturumun kaybolmadan yeniden aktif olmasÄ±
     });
 
 // Authorization (yetkilendirme)
 builder.Services.AddAuthorization();
 
-// PostgreSQL veritabaný baðlantýsý
+// PostgreSQL veritabanÄ± baÄŸlantÄ±sÄ±
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// MVC yapýlandýrmasý
+// MVC yapÄ±landÄ±rmasÄ±
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Oturum yönetimi
+// Oturum yÃ¶netimi
 app.UseSession();
 
-// Kimlik doðrulama
+// Kimlik doÄŸrulama
 app.UseAuthentication();
 
 app.UseHttpsRedirection();
@@ -45,9 +52,9 @@ app.UseRouting();
 // Yetkilendirme
 app.UseAuthorization();
 
-// Ana sayfa yönlendirmesi
+// Ana sayfa yÃ¶nlendirmesi
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");  // Ana sayfaya yönlendirme
+    pattern: "{controller=Home}/{action=Index}/{id?}");  // Ana sayfaya yÃ¶nlendirme
 
 app.Run();
