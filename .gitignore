@@ -1,0 +1,38 @@
+﻿# Build sonuçları
+bin/
+obj/
+
+# Rider / VSCode / VS user ayarları
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Logs
+*.log
+
+# .NET dosyaları
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Runtime klasörleri
+wwwroot/
+
+# Ortam dosyaları
+.env
+appsettings.Development.json
+appsettings.*.json
+
+# Paketler
+*.nupkg
+*.snupkg
+
+# ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Diğer
+*.db
+*.db-journal
+*.pid

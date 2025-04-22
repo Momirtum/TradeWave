@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using tradeWave.Models;
+using TradeWave.Models;
 
 namespace TradeWave.Controllers
 {
@@ -26,6 +26,12 @@ namespace TradeWave.Controllers
 
         [Authorize]
         public IActionResult Index()
+        {
+            return View();
+        }
+
+        [Authorize]
+        public IActionResult Markets()
         {
             return View();
         }

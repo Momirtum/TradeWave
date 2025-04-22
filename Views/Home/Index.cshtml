@@ -2,7 +2,341 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Crypto Exchange Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<script>
+    var coins = ["bitcoin", "ethereum", "litecoin", "ripple"];
+    var coinClasses = ["BTC_price", "ETH_price", "LTC_price", "XRP_price"];
+
+        fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,litecoin,ripple&vs_currencies=usd")
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .then(data => {
+            const coinIds = Object.keys(data); // ["bitcoin", "ethereum", ...]
+            const coinClasses = [".BTC_price", ".ETH_price", ".LTC_price", ".XRP_price"]; // DOM'da karşılık gelen sınıflar
+
+            coinIds.forEach((coin, index) => {
+                let sayi = data[coin].usd;
+                let rakamlar = sayi
+                    .toString()
+                    .replace('.', '')
+                    .split('')
+                    .map(Number);
+
+                if (coin == "bitcoin") {
+                    rakamlar.push("0")
+                    rakamlar.push("0")
+                }
+                rakamlar.reverse();
+
+                for (let i = 0; i < rakamlar.length; i++) {
+                    if (i === 2) {
+                        rakamlar.splice(i, 0, ".");
+                    } else if ((i - 2) % 4 === 0 && i > 2) {
+                        rakamlar.splice(i, 0, ",");
+                    }
+                }
+
+                sayi = rakamlar.reverse().join("");
+
+                document.querySelector(coinClasses[index]).textContent =  "$" + `${sayi}`;
+            });
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+        });
+
+        var startDate = new Date();
+        startDate.setUTCHours(0, 0, 0);
+        startDate = new Date(startDate).toISOString();
+        var endDate = new Date();
+        endDate = endDate.setUTCHours(23, 59, 59);
+        endDate = new Date(endDate).toISOString();
+
+        fetch(`https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400&start=${startDate}&end=${endDate}`).then(response => {
+            console.log(response)
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        }).then(data => {
+            var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
+            yuzde = Math.floor(yuzde * 100) / 100;
+            document.querySelector(".BTC_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+        })
+
+
+        fetch(`https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=86400&start=${startDate}&end=${endDate}`).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        }).then(data => {
+            var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
+            yuzde = Math.floor(yuzde * 100) / 100;
+            document.querySelector(".ETH_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+        })
+
+
+        fetch(`https://api.exchange.coinbase.com/products/LTC-USD/candles?granularity=86400&start=${startDate}&end=${endDate}`).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        }).then(data => {
+            var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
+            yuzde = Math.floor(yuzde * 100) / 100;
+            document.querySelector(".LTC_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+        })
+
+
+        fetch(`https://api.exchange.coinbase.com/products/XRP-USD/candles?granularity=86400&start=${startDate}&end=${endDate}`).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        }).then(data => {
+            var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
+            yuzde = Math.floor(yuzde * 100) / 100;
+            document.querySelector(".XRP_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+        })
+
+</script>
+<body>
+
+    <section class="hero">
+        <h1>Trade with Confidence</h1>
+        <p>The most trusted cryptocurrency exchange platform</p>
+        <div class="hero-buttons">
+            <button class="btn primary">Start Trading</button>
+            <button class="btn secondary">Learn More</button>
+        </div>
+
+        <div class="price-container">
+            <div class="price-box">
+                <div class="pair">
+                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/1.png" height="24" width="24" alt="BTC" loading="lazy" decoding="async" fetchpriority="low">
+                    </span><span>BTC/USD</span>
+                </div>
+                <div class="price BTC_price"></div>
+                <div class="change positive BTC_change"></div>
+            </div>
+            <div class="price-box">
+                <div class="pair"><img src="https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" height="24" width="24" alt="ETH" loading="lazy" decoding="async" fetchpriority="low"> <span>ETH/USD</span></div>
+                <div class="price ETH_price"></div>
+                <div class="change positive ETH_change"></div>
+            </div>
+            <div class="price-box">
+                <div class="pair"><img src="https://s2.coinmarketcap.com/static/img/coins/64x64/2.png" height="24" width="24" alt="LTC" loading="lazy" decoding="async" fetchpriority="low"> <span>LTC/USD</span></div>
+                <div class="price LTC_price"></div>
+                <div class="change positive LTC_change"></div>
+            </div>
+            <div class="price-box">
+                <div class="pair"><img src="https://s2.coinmarketcap.com/static/img/coins/64x64/52.png" height="24" width="24" alt="XRP" loading="lazy" decoding="async" fetchpriority="low"> <span>XRP/USD</span></div>
+                <div class="price XRP_price"></div>
+                <div class="change positive XRP_change"></div>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="why-choose-us">
+        <h2>Why Choose Us</h2>
+        <div class="features">
+            <div class="feature">
+                <div class="icon">🛡️</div>
+                <h3>Secure Storage</h3>
+                <p>We store the vast majority of digital assets in secure offline storage.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">⚡</div>
+                <h3>Instant Trading</h3>
+                <p>Execute trades instantly with our high-performance trading engine.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">🎧</div>
+                <h3>24/7 Support</h3>
+                <p>Round-the-clock support to help you with any questions.</p>
+            </div>
+        </div>
+    </section>
+
+</body>
+<style>
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+        color: #1a1a1a;
+        line-height: 1.6;
+    }
+
+    .hero {
+        text-align: center;
+        padding: 60px 20px 40px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .hero h1 {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+    }
+
+    .hero p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .hero-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 40px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .primary {
+        background-color: #0d0d0d;
+        color: #fff;
+        border: none;
+    }
+
+    .secondary {
+        background-color: #fff;
+        color: #0d0d0d;
+        border: 1px solid #ccc;
+    }
+
+    .why-choose-us {
+        background-color: #ffffff;
+        padding: 50px 20px;
+        text-align: center;
+    }
+
+    .why-choose-us h2 {
+        font-size: 24px;
+        margin-bottom: 30px;
+    }
+
+    .features {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+    .feature {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 400px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        text-align: left;
+    }
+
+    .icon {
+        font-size: 30px;
+        margin-bottom: 10px;
+    }
+
+    .feature h3 {
+        margin-bottom: 10px;
+        font-size: 18px;
+    }
+
+    .feature p {
+        color: #555;
+        font-size: 14px;
+    }
+
+    .price-container {
+        display: flex;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        overflow: hidden;
+        max-width: 900px;
+        margin: 40px auto;
+    }
+
+    .price-box {
+        flex: 1;
+        padding: 20px;
+        text-align: center;
+        border-right: 1px solid #e0e0e0;
+    }
+
+    .price-box:last-child {
+        border-right: none;
+    }
+
+    .pair {
+        display: flex;
+        font-weight: bold;
+        color: #333;
+        font-size: 14px;
+        margin-bottom: 8px;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .pair span {
+        font-weight: 600;
+        margin-left: 5px;
+    }
+
+    .price {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #111;
+    }
+
+    .change {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .positive {
+        color: #28a745;
+    }
+
+
+    .container {
+        padding-right: 0;
+        padding-left: 0;
+        margin-right: 0;
+        margin-left: 0;
+        max-width: none;
+    }
+</style>
+</html>
+
