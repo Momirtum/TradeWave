@@ -45,3 +45,4 @@ C:\Users\Emirc\OneDrive\Masaüstü\TradeWave\TradeWave\obj\Debug\net8.0\refint\T
 C:\Users\Emirc\OneDrive\Masaüstü\TradeWave\TradeWave\obj\Debug\net8.0\TradeWave.pdb
 C:\Users\Emirc\OneDrive\Masaüstü\TradeWave\TradeWave\obj\Debug\net8.0\TradeWave.genruntimeconfig.cache
 C:\Users\Emirc\OneDrive\Masaüstü\TradeWave\TradeWave\obj\Debug\net8.0\ref\TradeWave.dll
+C:\Users\Emirc\OneDrive\Masaüstü\TradeWave\TradeWave\obj\Debug\net8.0\TradeWave.sourcelink.json
