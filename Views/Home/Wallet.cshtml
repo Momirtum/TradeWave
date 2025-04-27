@@ -1,0 +1,164 @@
+﻿@{
+    ViewData["Title"] = "Wallet";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Wallet Dashboard</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f5f7fa;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .balance-card, .actions-card, .transactions-card, .wallet-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        h1, h2 {
+            margin: 0 0 15px;
+            color: #333;
+        }
+
+        .coins {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .coin {
+            flex: 1;
+            background: #f0f2f5;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .actions-card button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .actions-card .send {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .actions-card button:not(.send) {
+            background-color: #e0e0e0;
+        }
+
+        .actions-card button:hover {
+            opacity: 0.9;
+        }
+
+        .transactions-card .transaction {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .amount {
+            font-weight: bold;
+        }
+
+            .amount.negative {
+                color: #e63946;
+            }
+
+            .amount.positive {
+                color: #2a9d8f;
+            }
+
+        .wallet-card p {
+            word-break: break-word;
+            background: #f0f2f5;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .copy {
+            margin-top: 10px;
+            padding: 10px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="balance-card">
+            <h2>Total Balance</h2>
+            <h1>$24,586.45</h1>
+            <div class="coins">
+                <div class="coin">
+                    <h3>Bitcoin</h3>
+                    <p>0.8945 BTC</p>
+                    <span>$16,234.23</span>
+                </div>
+                <div class="coin">
+                    <h3>Ethereum</h3>
+                    <p>4.234 ETH</p>
+                    <span>$8,352.22</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-card">
+            <h2>Quick Actions</h2>
+            <button class="send">Send</button>
+            <button>Receive</button>
+            <button>Swap</button>
+        </div>
+
+        <div class="transactions-card">
+            <h2>Recent Transactions</h2>
+            <div class="transaction">
+                <div>
+                    <p>Sent Bitcoin</p>
+                    <span>Jan 15, 2025</span>
+                </div>
+                <div class="amount negative">-0.234 BTC ($4,322.43)</div>
+            </div>
+            <div class="transaction">
+                <div>
+                    <p>Received Ethereum</p>
+                    <span>Jan 14, 2025</span>
+                </div>
+                <div class="amount positive">+2.456 ETH ($4,687.34)</div>
+            </div>
+        </div>
+
+        <div class="wallet-card">
+            <h2>Wallet Address</h2>
+            <p>0x71C7656EC7ab88b098def57B49f0b1656d8976F</p>
+            <button class="copy">Copy Address</button>
+        </div>
+    </div>
+</body>
+</html>
