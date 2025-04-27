@@ -2,7 +2,292 @@
     ViewData["Title"] = "Markets";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Markets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9fafb;
+        }
+
+        /* Header kısmı */
+        .markets-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .search-container {
+            flex: 1 1 300px;
+        }
+
+            .search-container input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                outline: none;
+            }
+
+        .markets-buttons {
+            display: flex;
+            gap: 10px;
+            flex: 1 1 300px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+            .markets-buttons button {
+                flex: 1 1 auto;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 8px;
+                background: #f1f5f9;
+                cursor: pointer;
+                transition: background 0.3s;
+                min-width: 80px;
+            }
+
+                .markets-buttons button:hover {
+                    background: #e2e8f0;
+                }
+
+            .markets-buttons .active {
+                background: #1e293b;
+                color: #fff;
+            }
+
+        /* Tablo containerı */
+        .markets-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        td {
+            font-size: 16px;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f5f9;
+            transition: background 0.3s;
+        }
+
+        .trade-button {
+            background: #1e293b;
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            .trade-button:hover {
+                background: #334155;
+            }
+
+        .positive {
+            color: green;
+        }
+
+        .negative {
+            color: red;
+        }
+
+        @@media (max-width: 768px) {
+            .markets-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .markets-buttons {
+                justify-content: center;
+            }
+
+            .search-container, .markets-buttons {
+                flex: 1 1 100%;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            th, td {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .markets-buttons button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            .trade-button {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="markets-header">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search markets">
+        </div>
+        <div class="markets-buttons">
+            <button class="active">All</button>
+            <button>Spot</button>
+            <button>Futures</button>
+        </div>
+    </div>
+
+    <div class="markets-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Market</th>
+                    <th>Last Price</th>
+                    <th>24h Change</th>
+                    <th>24h Volume</th>
+                    <th>Market Cap</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="marketTable">
+                <!-- Veriler dinamik olarak buraya eklenecek -->
+            </tbody>
+        </table>
+        <div id="pagination" style="text-align: center; margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        let coins = [];
+        let filteredCoins = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        // Sayıyı doğru formatta yazdırma fonksiyonu
+        function formatPrice(price) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(price);
+        }
+
+        async function fetchCoins() {
+            try {
+                const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
+                coins = await res.json();
+                filteredCoins = coins;
+                renderTable();
+                renderPagination();
+            } catch (error) {
+                console.error('Veri alınamadı:', error);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('marketTable');
+            tbody.innerHTML = '';
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const pageItems = filteredCoins.slice(start, start + itemsPerPage);
+
+            if (pageItems.length === 0) {
+                const noRow = document.createElement('tr');
+                noRow.innerHTML = `
+                  <td colspan="6" style="text-align:center; padding:20px; color: #9ca3af;">
+                    No results found
+                  </td>`;
+                tbody.appendChild(noRow);
+                return;
+            }
+
+            pageItems.forEach(coin => {
+                const changeClass = coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${coin.symbol.toUpperCase()}/USD<br><small>${coin.name}</small></td>
+                  <td>${formatPrice(coin.current_price)}</td>
+                  <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
+                  <td>$${(coin.total_volume / 1e9).toFixed(2)}B</td>
+                  <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
+                  <td><button class="trade-button">Trade</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
+
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = 'Prev';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                currentPage--;
+                renderTable();
+                renderPagination();
+            };
+
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Next';
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+            nextBtn.onclick = () => {
+                currentPage++;
+                renderTable();
+                renderPagination();
+            };
+
+            pagination.appendChild(prevBtn);
+            pagination.appendChild(document.createTextNode(` Sayfa ${currentPage} / ${totalPages || 1} `));
+            pagination.appendChild(nextBtn);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', () => {
+            const filter = document.getElementById('searchInput').value.toLowerCase();
+            filteredCoins = coins.filter(coin =>
+                coin.name.toLowerCase().includes(filter) ||
+                coin.symbol.toLowerCase().includes(filter)
+            );
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+        });
+
+        // Sayfayı ilk açtığında veriyi çek
+        fetchCoins();
+    </script>
+
+</body>
+</html>

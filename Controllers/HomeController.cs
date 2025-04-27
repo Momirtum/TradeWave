@@ -36,6 +36,11 @@ namespace TradeWave.Controllers
             return View();
         }
 
+        public IActionResult Wallet()
+        {
+            return View();
+        }
+
         [Authorize]
         public IActionResult Privacy()
         {
