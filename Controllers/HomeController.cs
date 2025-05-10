@@ -106,11 +106,6 @@ namespace TradeWave.Controllers
         [AllowAnonymous]
         public IActionResult SendMail()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
             return View();
         }
 
@@ -338,6 +333,29 @@ namespace TradeWave.Controllers
                 .ToListAsync();
         
             return View(list);
+        }
+        [Authorize]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            // Kullanıcının kimliği
+            var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("Login", "Home");
+
+            var user = _context.User.FirstOrDefault(u => u.Email == email);
+            if (user == null)
+                return RedirectToAction("Login", "Home");
+
+            // DB'den sil
+            _context.User.Remove(user);
+            await _context.SaveChangesAsync();
+
+            // Oturumu ve cookieleri temizle
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // Login sayfasına yönlendir
+            return RedirectToAction("Login", "Home");
         }
         private string HashPassword(string NewPassword)
         {
