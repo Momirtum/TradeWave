@@ -119,6 +119,29 @@
         .negative {
             color: red;
         }
+        /* Pagination butonları - üstteki Markets butonları ile aynı stil */
+        .markets-pagination-btn {
+            flex: 1 1 auto;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background: #f1f5f9;
+            cursor: pointer;
+            transition: background 0.3s;
+            min-width: 80px;
+            margin: 0 5px;
+        }
+
+        .markets-pagination-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .markets-pagination-btn:disabled {
+            background: #e5e7eb;
+            cursor: not-allowed;
+            color: #9ca3af;
+        }
+
 
         @@media (max-width: 768px) {
             .markets-header {
@@ -150,6 +173,7 @@
                 padding: 6px 12px;
                 font-size: 14px;
             }
+
         }
     </style>
 </head>
@@ -176,6 +200,7 @@
                     <th>24h Volume</th>
                     <th>Market Cap</th>
                     <th>Action</th>
+                    <th>Follow</th>
                 </tr>
             </thead>
             <tbody id="marketTable">
@@ -186,108 +211,171 @@
     </div>
 
     <script>
-        let coins = [];
-        let filteredCoins = [];
-        let currentPage = 1;
-        const itemsPerPage = 5;
+    let coins = [];
+    let filteredCoins = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-        // Sayıyı doğru formatta yazdırma fonksiyonu
-        function formatPrice(price) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(price);
-        }
+    let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
 
-        async function fetchCoins() {
-            try {
-                const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
-                coins = await res.json();
-                filteredCoins = coins;
-                renderTable();
-                renderPagination();
-            } catch (error) {
-                console.error('Veri alınamadı:', error);
-            }
-        }
+    function formatPrice(price) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(price);
+    }
 
-        function renderTable() {
-            const tbody = document.getElementById('marketTable');
-            tbody.innerHTML = '';
-
-            const start = (currentPage - 1) * itemsPerPage;
-            const pageItems = filteredCoins.slice(start, start + itemsPerPage);
-
-            if (pageItems.length === 0) {
-                const noRow = document.createElement('tr');
-                noRow.innerHTML = `
-                  <td colspan="6" style="text-align:center; padding:20px; color: #9ca3af;">
-                    No results found
-                  </td>`;
-                tbody.appendChild(noRow);
-                return;
-            }
-
-            pageItems.forEach(coin => {
-                const changeClass = coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative';
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                  <td>${coin.symbol.toUpperCase()}/USD<br><small>${coin.name}</small></td>
-                  <td>${formatPrice(coin.current_price)}</td>
-                  <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
-                  <td>$${(coin.total_volume / 1e9).toFixed(2)}B</td>
-                  <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
-                  <td><button class="trade-button">Trade</button></td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function renderPagination() {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-
-            const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
-
-            const prevBtn = document.createElement('button');
-            prevBtn.textContent = 'Prev';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => {
-                currentPage--;
-                renderTable();
-                renderPagination();
-            };
-
-            const nextBtn = document.createElement('button');
-            nextBtn.textContent = 'Next';
-            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-            nextBtn.onclick = () => {
-                currentPage++;
-                renderTable();
-                renderPagination();
-            };
-
-            pagination.appendChild(prevBtn);
-            pagination.appendChild(document.createTextNode(` Sayfa ${currentPage} / ${totalPages || 1} `));
-            pagination.appendChild(nextBtn);
-        }
-
-        document.getElementById('searchInput').addEventListener('input', () => {
-            const filter = document.getElementById('searchInput').value.toLowerCase();
-            filteredCoins = coins.filter(coin =>
-                coin.name.toLowerCase().includes(filter) ||
-                coin.symbol.toLowerCase().includes(filter)
-            );
-            currentPage = 1;
+    async function fetchCoins() {
+        try {
+            const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
+            coins = await res.json();
+            filteredCoins = coins;
             renderTable();
             renderPagination();
-        });
+            renderWatchlist();
+        } catch (error) {
+            console.error('Veri alınamadı:', error);
+        }
+    }
 
-        // Sayfayı ilk açtığında veriyi çek
-        fetchCoins();
-    </script>
+    function toggleWatchlist(coin) {
+        const index = watchlist.findIndex(c => c.id === coin.id);
+        if (index === -1) {
+            watchlist.push(coin);
+        } else {
+            watchlist.splice(index, 1);
+        }
+        localStorage.setItem('watchlist', JSON.stringify(watchlist));
+        renderWatchlist();
+        renderTable();
+    }
+
+    function isInWatchlist(coin) {
+        return watchlist.some(c => c.id === coin.id);
+    }
+
+    function renderWatchlist() {
+        const container = document.getElementById('watchlist');
+        if (!container) return;
+
+        container.innerHTML = `<h2>Takip Listem</h2>`;
+        if (watchlist.length === 0) {
+            container.innerHTML += `<p>Henüz bir coin eklenmedi.</p>`;
+            return;
+        }
+
+        const list = document.createElement('ul');
+        watchlist.forEach(c => {
+            const li = document.createElement('li');
+            li.textContent = `${c.name} (${c.symbol.toUpperCase()})`;
+            list.appendChild(li);
+        });
+        container.appendChild(list);
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('marketTable');
+        tbody.innerHTML = '';
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const pageItems = filteredCoins.slice(start, start + itemsPerPage);
+
+        if (pageItems.length === 0) {
+            const noRow = document.createElement('tr');
+            noRow.innerHTML = `<td colspan="6" style="text-align:center; padding:20px; color: #9ca3af;">No results found</td>`;
+            tbody.appendChild(noRow);
+            return;
+        }
+
+        pageItems.forEach(coin => {
+            const changeClass = coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative';
+            const row = document.createElement('tr');
+            const inWatchlist = isInWatchlist(coin);
+
+            row.innerHTML = `
+                <td>${coin.symbol.toUpperCase()}/USD<br><small>${coin.name}</small></td>
+                <td>${formatPrice(coin.current_price)}</td>
+                <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
+                <td>$${(coin.total_volume / 1e9).toFixed(2)}B</td>
+                <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
+                <td><button class="trade-button">Trade</button></td>
+                <td>
+                    <button class="trade-button" style="background: ${inWatchlist ? '#e11d48' : '#1e293b'}"
+                        onclick="toggleWatchlist(${JSON.stringify(coin).replace(/"/g, '&quot;')})">
+                        ${inWatchlist ? 'Takipten Çıkar' : 'Takip Et'}
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        const totalPages = Math.ceil(filteredCoins.length / itemsPerPage);
+
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = 'Prev';
+        prevBtn.className = 'markets-pagination-btn';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            currentPage--;
+            renderTable();
+            renderPagination();
+        };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Next';
+        nextBtn.className = 'markets-pagination-btn';
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        nextBtn.onclick = () => {
+            currentPage++;
+            renderTable();
+            renderPagination();
+        };
+
+        pagination.appendChild(prevBtn);
+        const pageText = document.createElement('span');
+        pageText.style.margin = '0 10px';
+        pageText.textContent = ` Sayfa ${currentPage} / ${totalPages || 1} `;
+        pagination.appendChild(pageText);
+        pagination.appendChild(nextBtn);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+        const filter = document.getElementById('searchInput').value.toLowerCase();
+        filteredCoins = coins.filter(coin =>
+            coin.name.toLowerCase().includes(filter) ||
+            coin.symbol.toLowerCase().includes(filter)
+        );
+        currentPage = 1;
+        renderTable();
+        renderPagination();
+    });
+
+    fetchCoins();
+    function followCoin(coin) {
+  fetch('/Watchlist/Add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      CoinName: coin.name,
+      CoinSymbol: coin.symbol.toUpperCase(),
+      CurrentPrice: coin.current_price.toString(),
+      PriceChange: coin.price_change_percentage_24h.toFixed(2)
+    })
+  })
+  .then(() => {
+    alert('Coin followed!');
+    // Optionally refresh or update UI
+  });
+}
+</script>
+
 
 </body>
 </html>

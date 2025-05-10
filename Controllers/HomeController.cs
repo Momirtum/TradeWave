@@ -35,16 +35,63 @@ namespace TradeWave.Controllers
         {
             return View();
         }
-
+        [Authorize]
+        public IActionResult WatchList()
+        {
+            return View();
+        }
+        [Authorize]
         public IActionResult Wallet()
         {
             return View();
         }
-
         [Authorize]
         public IActionResult Privacy()
         {
             return View();
+        }
+        [HttpGet]
+        [Authorize]
+        public ActionResult Profile()
+        {
+            string email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login", "Home"); // Kullanıcı oturum açmamışsa login'e yönlendir
+            }
+
+            var user = _context.User.FirstOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                return RedirectToAction("Register", "Home"); // Kullanıcı bulunamadıysa kayıt sayfasına yönlendir
+            }
+
+            return View(user);
+        }
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> Profile(User model)
+        {
+            string email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty;
+            var userInDb = await _context.User.FirstOrDefaultAsync(u => u.Email == email);
+
+            // Update user properties
+            userInDb.Name = model.Name;
+            userInDb.Surname = model.Surname;
+            userInDb.WalletAdress = model.WalletAdress;
+            userInDb.UserImagePath = model.UserImagePath;
+            userInDb.CreationDate = userInDb.CreationDate.ToUniversalTime();
+            userInDb.WalletAdress = userInDb.WalletAdress;
+            // Mark the entity as modified and save changes
+            _context.User.Update(userInDb);
+            await _context.SaveChangesAsync();
+            
+
+            // Provide feedback to the user
+            TempData["Message"] = "Profil başarıyla güncellendi!";
+            return RedirectToAction("Index", "Home");
         }
         [AllowAnonymous]
         public IActionResult ForgotPassword()
@@ -87,7 +134,7 @@ namespace TradeWave.Controllers
 
             return View();
         }
-
+        
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login(string email, string password)
@@ -256,8 +303,42 @@ namespace TradeWave.Controllers
 
             ViewBag.Message = "Şifre sıfırlama linki e-posta adresinize gönderildi.";
             return Redirect("/Home/Login");
+        }        // HomeController.cs
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Add([FromBody] Watchlistuser model)
+        {
+            var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return Unauthorized();
+        
+            bool exists = await _context.Watchlistuser
+                .AnyAsync(x => x.CoinSymbol == model.CoinSymbol && x.UserID == user.ID);
+        
+            if (!exists)
+            {
+                model.UserID = user.ID;
+                _context.Watchlistuser.Add(model);
+                await _context.SaveChangesAsync();
+            }
+            return Ok();
         }
-
+        
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Watchlist()
+        {
+            var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return Unauthorized();
+        
+            // Only user's data
+            var list = await _context.Watchlistuser
+                .Where(x => x.UserID == user.ID)
+                .ToListAsync();
+        
+            return View(list);
+        }
         private string HashPassword(string NewPassword)
         {
             using (SHA256 sha256 = SHA256.Create())

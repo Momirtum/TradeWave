@@ -1,0 +1,142 @@
+@{
+    ViewData["Title"] = "Watchlist";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Watchlist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9fafb;
+        }
+
+        .watchlist-container {
+            background: #fff;
+            margin-top: 40px;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        td {
+            font-size: 16px;
+        }
+
+        .positive {
+            color: green;
+        }
+
+        .negative {
+            color: red;
+        }
+
+        .trade-button {
+            background: #1e293b;
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .trade-button:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="watchlist-container">
+        <h2>Takip Listem</h2>
+        <table id="watchlistTable">
+            <thead>
+                <tr>
+                    <th>Market</th>
+                    <th>Last Price</th>
+                    <th>24h Change</th>
+                    <th>Action</th>
+                    <th>Takip</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dinamik olarak doldurulacak -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(price);
+        }
+
+        function toggleWatchlist(coin) {
+            const index = watchlist.findIndex(c => c.id === coin.id);
+            if (index !== -1) {
+                watchlist.splice(index, 1);
+            }
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            renderWatchlist();
+        }
+
+        function renderWatchlist() {
+            const tbody = document.querySelector('#watchlistTable tbody');
+            tbody.innerHTML = '';
+
+            if (watchlist.length === 0) {
+                const noRow = document.createElement('tr');
+                noRow.innerHTML = `<td colspan="5" style="text-align:center; color:#9ca3af;">Hiç coin takip edilmiyor.</td>`;
+                tbody.appendChild(noRow);
+                return;
+            }
+
+            watchlist.forEach(coin => {
+                const changeClass = coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${coin.symbol.toUpperCase()}/USD<br><small>${coin.name}</small></td>
+                    <td>${formatPrice(coin.current_price)}</td>
+                    <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
+                    <td><button class="trade-button">Trade</button></td>
+                    <td><button class="trade-button" style="background:#e11d48" onclick="toggleWatchlist(${JSON.stringify(coin).replace(/"/g, '&quot;')})">Takipten Çıkar</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        renderWatchlist();
+    </script>
+
+</body>
+</html>

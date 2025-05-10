@@ -12,5 +12,7 @@ namespace TradeWave.Data
 
         // Veritabanı tablolarını temsil eden DbSet'ler
         public DbSet<User> User { get; set; }
+        public DbSet<Watchlistuser> Watchlistuser { get; set; }
+
     }
 }
