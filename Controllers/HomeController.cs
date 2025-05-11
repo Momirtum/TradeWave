@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using TradeWave.Models;
 
 namespace TradeWave.Controllers
 {
@@ -81,7 +80,6 @@ namespace TradeWave.Controllers
             userInDb.Name = model.Name;
             userInDb.Surname = model.Surname;
             userInDb.WalletAdress = model.WalletAdress;
-            userInDb.UserImagePath = model.UserImagePath;
             userInDb.CreationDate = userInDb.CreationDate.ToUniversalTime();
             userInDb.WalletAdress = userInDb.WalletAdress;
             // Mark the entity as modified and save changes
@@ -143,9 +141,11 @@ namespace TradeWave.Controllers
             }
 
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Name + " " + user.Surname),
-                new Claim(ClaimTypes.Email, user.Email)
+            { 
+                new Claim(ClaimTypes.Name, user.Name), 
+                new Claim(ClaimTypes.Surname, user.Surname),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.ID.ToString())
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -293,47 +293,64 @@ namespace TradeWave.Controllers
 
 
 
-            // Mail gönder
-            await emailService.SendEmailAsync(user.Email, "Şifre Sıfırlama Talebi", emailBody);
+        // Mail gönder
+        await emailService.SendEmailAsync(user.Email, "Şifre Sıfırlama Talebi", emailBody);
 
-            ViewBag.Message = "Şifre sıfırlama linki e-posta adresinize gönderildi.";
+        ViewBag.Message = "Şifre sıfırlama linki e-posta adresinize gönderildi.";
             return Redirect("/Home/Login");
-        }        // HomeController.cs
-        [Authorize]
+        }
+
+
         [HttpPost]
-        public async Task<IActionResult> Add([FromBody] Watchlistuser model)
+        [Route("Home/AddToWatchlist")]
+        public async Task<IActionResult> AddToWatchlist([FromBody] Coin coin)
         {
-            var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var user = await _context.User.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return Unauthorized();
-        
-            bool exists = await _context.Watchlistuser
-                .AnyAsync(x => x.CoinSymbol == model.CoinSymbol && x.UserID == user.ID);
-        
-            if (!exists)
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            var existingCoin = await _context.Watchlistuser.FirstOrDefaultAsync(w => w.UserID == Convert.ToInt32(sessionUserID) && w.CoinName == coin.CoinName);
+
+            if (existingCoin == null)
             {
-                model.UserID = user.ID;
-                _context.Watchlistuser.Add(model);
+                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID) , CoinSymbol = coin.CoinSymbol , CoinName = coin.CoinName });
                 await _context.SaveChangesAsync();
+                return Ok();
             }
-            return Ok();
+
+            return BadRequest("Coin already in watchlist.");
         }
-        
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> Watchlist()
+
+
+        [HttpPost]
+        [Route("Home/RemoveFromWatchlist")]
+        public async Task<IActionResult> RemoveFromWatchlist([FromBody] Coin coin)
         {
-            var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var user = await _context.User.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return Unauthorized();
-        
-            // Only user's data
-            var list = await _context.Watchlistuser
-                .Where(x => x.UserID == user.ID)
-                .ToListAsync();
-        
-            return View(list);
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+            var coinToRemove = await _context.Watchlistuser.FirstOrDefaultAsync(c => c.UserID == Convert.ToInt32(sessionUserID) && c.CoinName == coin.CoinName);
+            if (coinToRemove != null)
+             {
+                _context.Watchlistuser.Remove(coinToRemove);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+
+            return NotFound("Coin not found in watchlist.");
         }
+
+
+
+        [HttpGet]
+        [Route("Home/GetWatchlist")]
+        public async Task<IActionResult> GetWatchlist()
+        {
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+            var watchlist = await _context.Watchlistuser
+                .Where(w => w.UserID == Convert.ToInt32(sessionUserID))
+                .ToListAsync();
+
+            return Ok(watchlist);
+        }
+
         [Authorize]
         public async Task<IActionResult> DeleteAccount()
         {
@@ -378,6 +395,23 @@ namespace TradeWave.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        public async Task<User> GetCurrentUser()
+        {
+            // Oturumdaki kullanıcı bilgilerini almak
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return null;  // Kullanıcı kimliği yoksa, kullanıcı oturum açmamış demektir
+            }
+
+            // Kullanıcı bilgilerini veritabanından almak
+            var user = await _context.User.FindAsync(userId);
+
+            return user;
+        }
+
     }
 
 }

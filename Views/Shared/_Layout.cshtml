@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -26,7 +28,28 @@
         </nav>
         <div class="navbar-right">
             <div class="mobile-menu-toggle">&#9776;</div>
-            <div class="profile-photo">ET</div>
+            <div class="profile-photo">
+
+                @if (User.HasClaim(c => c.Type == ClaimTypes.Name) &&
+                User.HasClaim(c => c.Type == ClaimTypes.Surname))
+                {
+                    
+                    var name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                    var surname = User.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value;
+
+                    var initials = "";
+
+                    if (!string.IsNullOrWhiteSpace(name))
+                        initials += char.ToUpper(name[0]);
+
+                    if (!string.IsNullOrWhiteSpace(surname))
+                        initials += char.ToUpper(surname[0]);
+                     
+                        @initials
+                }
+
+
+            </div>
         </div>
     </header>
 

@@ -171,12 +171,6 @@
             @Html.ValidationMessageFor(m => m.WalletAdress)
           </div>
 
-          <div class="mb-3">
-            <label for="bio" class="form-label">User Image Path</label>
-            @Html.TextBoxFor(m => m.UserImagePath, new { @class = "form-control", id = "UserImagePath" })
-            @Html.ValidationMessageFor(m => m.UserImagePath)
-          </div>
-
           <button type="submit" class="btn btn-dark">Save Changes</button>
         </form>
       </div>

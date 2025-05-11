@@ -89,7 +89,30 @@
     </div>
 
     <script>
-        let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
+        let watchlist = [];
+
+        // Sunucudan veri al ve tabloyu oluştur
+        function getWatchlistData() {
+            console.log("İçerdeyim brom");
+            fetch("https://localhost:7283/Home/GetWatchlist", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include"
+            })
+            .then(res => res.json())
+            .then(data => {
+                watchlist = data;
+                renderWatchlist();
+            })
+            .catch(error => {
+                console.error('Watchlist alınırken hata oluştu:', error);
+            });
+        }
+
+        // DOM yüklendiğinde çalıştır
+        document.addEventListener("DOMContentLoaded", getWatchlistData);
 
         function formatPrice(price) {
             return new Intl.NumberFormat('en-US', {
@@ -100,20 +123,35 @@
             }).format(price);
         }
 
-        function toggleWatchlist(coin) {
-            const index = watchlist.findIndex(c => c.id === coin.id);
-            if (index !== -1) {
-                watchlist.splice(index, 1);
-            }
-            localStorage.setItem('watchlist', JSON.stringify(watchlist));
-            renderWatchlist();
+        async function removeFromWatchlist(coinName) {
+            await fetch("https://localhost:7283/Home/RemoveFromWatchlist", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    CoinName: coinName,
+                    CoinSymbol: "",
+                })})
+                .then(response => {
+                    if (response.ok) {
+                        console.log("Coin başarıyla silindi.");
+                        getWatchlistData();
+                        renderWatchlist();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error("Hata: " + text);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
 
         function renderWatchlist() {
             const tbody = document.querySelector('#watchlistTable tbody');
             tbody.innerHTML = '';
 
-            if (watchlist.length === 0) {
+            if (!watchlist || watchlist.length === 0) {
                 const noRow = document.createElement('tr');
                 noRow.innerHTML = `<td colspan="5" style="text-align:center; color:#9ca3af;">Hiç coin takip edilmiyor.</td>`;
                 tbody.appendChild(noRow);
@@ -121,22 +159,27 @@
             }
 
             watchlist.forEach(coin => {
-                const changeClass = coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative';
+                const change = parseFloat(coin.price_change_percentage_24h || "0");
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+
+                // coin.CoinSymbol ve coin.CoinName için null/undefined kontrolü
+                const coinSymbol = coin.coinSymbol ? coin.coinSymbol.toUpperCase() : 'N/A';
+                const coinName = coin.coinName || 'Bilgi Yok';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${coin.symbol.toUpperCase()}/USD<br><small>${coin.name}</small></td>
-                    <td>${formatPrice(coin.current_price)}</td>
-                    <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
-                    <td><button class="trade-button">Trade</button></td>
-                    <td><button class="trade-button" style="background:#e11d48" onclick="toggleWatchlist(${JSON.stringify(coin).replace(/"/g, '&quot;')})">Takipten Çıkar</button></td>
-                `;
+                        <td>${coinSymbol}/USD<br><small>${coinName}</small></td>
+                        <td>${formatPrice(coin.current_price)}</td>
+                        <td class="${changeClass}">${change.toFixed(2)}%</td>
+                        <td><button class="trade-button">Trade</button></td>
+                                <td><button class="trade-button" style="background:#e11d48" onclick="removeFromWatchlist('${coinName}')">Takipten Çıkar</button></td>
+                    `;
                 tbody.appendChild(row);
             });
         }
-
-        renderWatchlist();
+        
     </script>
+
 
 </body>
 </html>
