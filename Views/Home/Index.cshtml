@@ -65,7 +65,7 @@
         endDate = new Date(endDate).toISOString();
 
         fetch(`https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400&start=${startDate}&end=${endDate}`).then(response => {
-            console.log(response)
+            console.log(response);
             if (response.ok) {
                 return response.json();
             } else {
@@ -74,7 +74,15 @@
         }).then(data => {
             var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
             yuzde = Math.floor(yuzde * 100) / 100;
-            document.querySelector(".BTC_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+            document.querySelector(".BTC_change").textContent = ((yuzde > 0) ? "+" : "") + yuzde + "%";
+            document.querySelector(".BTC_change").classList.remove("positive", "negative");
+
+            // Duruma göre sınıf ekle
+            if (yuzde > 0) {
+                document.querySelector(".BTC_change").classList.add("positive");
+            } else if (yuzde < 0) {
+                document.querySelector(".BTC_change").classList.add("negative");
+            }
         })
 
 
@@ -87,7 +95,15 @@
         }).then(data => {
             var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
             yuzde = Math.floor(yuzde * 100) / 100;
-            document.querySelector(".ETH_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+            document.querySelector(".ETH_change").textContent = ((yuzde > 0) ? "+" : "") + yuzde + "%";
+            document.querySelector(".ETH_change").classList.remove("positive", "negative");
+
+            // Duruma göre sınıf ekle
+            if (yuzde > 0) {
+                document.querySelector(".ETH_change").classList.add("positive");
+            } else if (yuzde < 0) {
+                document.querySelector(".ETH_change").classList.add("negative");
+            }
         })
 
 
@@ -100,7 +116,15 @@
         }).then(data => {
             var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
             yuzde = Math.floor(yuzde * 100) / 100;
-            document.querySelector(".LTC_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+            document.querySelector(".LTC_change").textContent = ((yuzde > 0) ? "+" : "") + yuzde + "%";
+            document.querySelector(".LTC_change").classList.remove("positive", "negative");
+
+            // Duruma göre sınıf ekle
+            if (yuzde > 0) {
+                document.querySelector(".LTC_change").classList.add("positive");
+            } else if (yuzde < 0) {
+                document.querySelector(".LTC_change").classList.add("negative");
+            }
         })
 
 
@@ -113,7 +137,15 @@
         }).then(data => {
             var yuzde = (((data[0][4] - data[0][3]) / data[0][3]) * 100);
             yuzde = Math.floor(yuzde * 100) / 100;
-            document.querySelector(".XRP_change").textContent = (yuzde < 0) ? "-" : "+" + `${yuzde}` + "%";
+            document.querySelector(".XRP_change").textContent = ((yuzde > 0) ? "+" : "") + yuzde + "%";
+            document.querySelector(".XRP_change").classList.remove("positive", "negative");
+
+            // Duruma göre sınıf ekle
+            if (yuzde > 0) {
+                document.querySelector(".XRP_change").classList.add("positive");
+            } else if (yuzde < 0) {
+                document.querySelector(".XRP_change").classList.add("negative");
+            }
         })
 
 </script>
@@ -329,6 +361,9 @@
         color: #28a745;
     }
 
+    .negative {
+        color: red;
+    }
 
     .container {
         padding-right: 0;

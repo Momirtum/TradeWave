@@ -52,6 +52,28 @@ namespace TradeWave.Controllers
         {
             return View();
         }
+
+        [Authorize]
+        public async Task<IActionResult> CoinDetail(string id)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetAsync($"https://api.coingecko.com/api/v3/coins/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var a = response.StatusCode;
+
+                    return NotFound(a);
+                }
+
+
+                var json = await response.Content.ReadAsStringAsync();
+                var coin = JsonConvert.DeserializeObject<CoinDetailViewModel>(json);
+
+                return View(coin);
+            }
+        }
+
         [HttpGet]
         [Authorize]
         public ActionResult Profile()
@@ -313,7 +335,7 @@ namespace TradeWave.Controllers
 
             if (existingCoin == null)
             {
-                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID), CoinSymbol = coin.CoinSymbol, CoinName = coin.CoinName });
+                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID), CoinSymbol = coin.CoinSymbol, CoinName = coin.CoinName , AddedTime = DateTime.UtcNow , PriceWhenAdded = coin.PriceWhenAdded });
                 await _context.SaveChangesAsync();
                 return Ok();
             }
@@ -377,74 +399,6 @@ namespace TradeWave.Controllers
             // Login sayfasına yönlendir
             return RedirectToAction("Login", "Home");
         }
-        [Authorize]
-        [HttpPost("follow")]
-        public async Task<IActionResult> Follow([FromBody] Watchlistuser model)
-        {
-            // UserID'yi alıyoruz
-            var userId = model.UserID;  // Frontend'den alınan UserID
-
-            // Kullanıcının sadece kendi watchlist'ini eklemesine izin veriyoruz
-            var existing = await _context.Watchlistuser
-                .FirstOrDefaultAsync(w => w.UserID == userId && w.CoinId == model.CoinId);
-
-            if (existing != null)
-            {
-                return BadRequest("Coin already followed.");
-            }
-
-            _context.Watchlistuser.Add(model);
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        [Authorize]
-        // Takibi Bırak (Remove from Watchlist)
-        [HttpDelete("unfollow")]
-        public async Task<IActionResult> UnfollowCoin(int userId, string coinId)
-        {
-            var watch = await _context.Watchlistuser
-                .FirstOrDefaultAsync(w => w.UserID == userId && w.CoinId == coinId);
-
-            if (watch == null)
-                return NotFound("Coin bulunamadı.");
-
-            _context.Watchlistuser.Remove(watch);
-            await _context.SaveChangesAsync();
-            return Ok("Coin takibi bırakıldı.");
-        }
-
-        // Kullanıcının watchlist'ini getir
-        [HttpGet("getWatchlist")]
-        public async Task<IActionResult> GetWatchlist(int userId)
-        {
-            var userWatchlist = await _context.Watchlistuser
-                .Where(w => w.UserID == userId)  // Sadece kullanıcının kendi watchlist'i
-                .Include(w => w.User)
-                .ToListAsync();
-
-            return Ok(userWatchlist);
-        }
-        [Authorize]
-        public async Task<IActionResult> CoinDetail(string id)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var response = await httpClient.GetAsync($"https://api.coingecko.com/api/v3/coins/{id}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    var a = response.StatusCode;
-
-                    return NotFound(a);
-                }
-                
-
-                var json = await response.Content.ReadAsStringAsync();
-                var coin = JsonConvert.DeserializeObject<CoinDetailViewModel>(json);
-
-                return View(coin);
-            }
-        }
 
         private string HashPassword(string NewPassword)
         {
@@ -466,22 +420,6 @@ namespace TradeWave.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
-        public async Task<User> GetCurrentUser()
-        {
-            // Oturumdaki kullanıcı bilgilerini almak
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (userId == null)
-            {
-                return null;  // Kullanıcı kimliği yoksa, kullanıcı oturum açmamış demektir
-            }
-
-            // Kullanıcı bilgilerini veritabanından almak
-            var user = await _context.User.FindAsync(userId);
-
-            return user;
         }
 
     }

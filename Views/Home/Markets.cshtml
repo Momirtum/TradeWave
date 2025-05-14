@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Markets";
 }
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -206,18 +207,6 @@
             </thead>
             <tbody id="marketTable">
                 <!-- Veriler dinamik olarak buraya eklenecek -->
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td><a href="/Home/CoinDetail/ethereum" class="text-blue-500 hover:underline">Detay</a></td>
-                <td>
-                    <button class="trade-button" style="background: ${inWatchlist ? '#e11d48' : '#1e293b'}"
-                        onclick="toggleWatchlist(${JSON.stringify(coin).replace(/" /g, '&quot;' )})">
-                        ${inWatchlist ? 'Takipten Çıkar' : 'Takip Et'}
-                    </button>
-                </td>
             </tbody>
         </table>
         <div id="pagination" style="text-align: center; margin-top: 20px;"></div>
@@ -233,21 +222,21 @@
         // Veritabanındaki watchlist'i yükle
         function fetchWatchlist() {
             console.log("İçerdeyim brom");
-            fetch("https://localhost:5267/Home/GetWatchlist", {
+            fetch("https://localhost:7283/Home/GetWatchlist", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 credentials: "include"
             })
-                .then(res => res.json())
-                .then(data => {
-                    watchlist = data;
-                    fetchCoins()
-                })
-                .catch(error => {
-                    console.error('Watchlist alınırken hata oluştu:', error);
-                });
+            .then(res => res.json())
+            .then(data => {
+                watchlist = data;
+                fetchCoins()
+            })
+            .catch(error => {
+                console.error('Watchlist alınırken hata oluştu:', error);
+            });
         }
 
         // DOM yüklendiğinde çalıştır
@@ -255,7 +244,7 @@
         // Tüm coin'leri al
         async function fetchCoins() {
             try {
-                const res = await fetch('https://api.coingecko.com/çapi/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
+                const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
                 coins = await res.json();
                 filteredCoins = coins;
                 renderTable();
@@ -271,12 +260,14 @@
 
             if (!inWatchlist) {
                 // Coin'i veritabanına ekle
-                await fetch("https://localhost:5267/Home/AddToWatchlist", {
+                await fetch("https://localhost:7283/Home/AddToWatchlist", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         CoinName: coin.name,
                         CoinSymbol: coin.symbol.toUpperCase(),
+                        PriceWhenAdded: coin.current_price,
+                        AddedTime: new Date().toISOString(),
                     })
                 });
 
@@ -287,7 +278,7 @@
                 });
             } else {
                 // Coin'i veritabanından çıkar
-                await fetch('https://localhost:5267/Home/RemoveFromWatchlist', {
+                await fetch('https://localhost:7283/Home/RemoveFromWatchlist', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -319,7 +310,7 @@
 
             if (pageItems.length === 0) {
                 const noRow = document.createElement('tr');
-                noRow.innerHTML = `<td colspan="6" style="text-align:center; padding:20px; color: #9ca3af;">No results found</td>`;
+                noRow.innerHTML = `<td colspan="7" style="text-align:center; padding:20px; color: #9ca3af;">No results found</td>`;
                 tbody.appendChild(noRow);
                 return;
             }
@@ -335,7 +326,7 @@
                         <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
                         <td>$${(coin.total_volume / 1e9).toFixed(2)}B</td>
                         <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
-                        <td><a href="/Home/CoinDetail/${coin.CoinId}" class="text-blue-500 hover:underline">Detay</a></td>
+                                                <td><a href="/Home/CoinDetail/${coin.name[0].toLowerCase() + coin.name.slice(1)}" class="text-blue-500 hover:underline">Detay</a></td>
                         <td>
                             <button class="trade-button" style="background: ${inWatchlist ? '#e11d48' : '#1e293b'}"
                                 onclick="toggleWatchlist(${JSON.stringify(coin).replace(/"/g, '&quot;')})">
@@ -391,6 +382,17 @@
                 maximumFractionDigits: 2
             }).format(price);
         }
+
+        document.getElementById('searchInput').addEventListener('input', () => {
+            const filter = document.getElementById('searchInput').value.toLowerCase();
+            filteredCoins = coins.filter(coin =>
+                coin.name.toLowerCase().includes(filter) ||
+                coin.symbol.toLowerCase().includes(filter)
+            );
+            currentPage = 1;
+            renderTable();
+            renderPagination();
+        });
     </script>
 
 </body>

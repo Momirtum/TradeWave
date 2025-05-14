@@ -81,7 +81,7 @@
                 <tr>
                     <th>Market</th>
                     <th>Last Price</th>
-                    <th>24h Change</th>
+                    <th>Purchase Date</th>
                     <th>Action</th>
                     <th>Takip</th>
                 </tr>
@@ -98,7 +98,7 @@
         // Sunucudan veri al ve tabloyu oluştur
         function getWatchlistData() {
             console.log("İçerdeyim brom");
-            fetch("https://localhost:5267/Home/GetWatchlist", {
+            fetch("https://localhost:7283/Home/GetWatchlist", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -128,7 +128,7 @@
         }
 
         async function removeFromWatchlist(coinName) {
-            await fetch("https://localhost:5267/Home/RemoveFromWatchlist", {
+            await fetch("https://localhost:7283/Home/RemoveFromWatchlist", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -165,6 +165,14 @@
             watchlist.forEach(coin => {
                 const change = parseFloat(coin.price_change_percentage_24h || "0");
                 const changeClass = change >= 0 ? 'positive' : 'negative';
+                var formattedDate = new Date(coin.addedTime);
+                formattedDate = formattedDate.toLocaleString('tr-TR', {
+					year: 'numeric',
+					month: '2-digit',
+					day: '2-digit',
+					hour: '2-digit',
+					minute: '2-digit'
+				});
 
                 // coin.CoinSymbol ve coin.CoinName için null/undefined kontrolü
                 const coinSymbol = coin.coinSymbol ? coin.coinSymbol.toUpperCase() : 'N/A';
@@ -173,10 +181,10 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                         <td>${coinSymbol}/USD<br><small>${coinName}</small></td>
-                        <td>${formatPrice(coin.current_price)}</td>
-                        <td class="${changeClass}">${change.toFixed(2)}%</td>
+                        <td>${formatPrice(coin.priceWhenAdded)}</td>
+                        <td>${formattedDate}</td>
                         <td><button class="trade-button">Trade</button></td>
-                                <td><button class="trade-button" style="background:#e11d48" onclick="removeFromWatchlist('${coinName}')">Takipten Çıkar</button></td>
+                        <td><button class="trade-button" style="background:#e11d48" onclick="removeFromWatchlist('${coinName}')">Takipten Çıkar</button></td>
                     `;
                 tbody.appendChild(row);
             });
