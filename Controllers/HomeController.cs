@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace TradeWave.Controllers
 {
@@ -44,6 +46,7 @@ namespace TradeWave.Controllers
         {
             return View();
         }
+
         [Authorize]
         public IActionResult Privacy()
         {
@@ -85,7 +88,7 @@ namespace TradeWave.Controllers
             // Mark the entity as modified and save changes
             _context.User.Update(userInDb);
             await _context.SaveChangesAsync();
-            
+
 
             // Provide feedback to the user
             TempData["Message"] = "Profil başarıyla güncellendi!";
@@ -127,7 +130,7 @@ namespace TradeWave.Controllers
 
             return View();
         }
-        
+
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Login(string email, string password)
@@ -141,8 +144,8 @@ namespace TradeWave.Controllers
             }
 
             var claims = new List<Claim>
-            { 
-                new Claim(ClaimTypes.Name, user.Name), 
+            {
+                new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Surname, user.Surname),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.NameIdentifier, user.ID.ToString())
@@ -293,10 +296,10 @@ namespace TradeWave.Controllers
 
 
 
-        // Mail gönder
-        await emailService.SendEmailAsync(user.Email, "Şifre Sıfırlama Talebi", emailBody);
+            // Mail gönder
+            await emailService.SendEmailAsync(user.Email, "Şifre Sıfırlama Talebi", emailBody);
 
-        ViewBag.Message = "Şifre sıfırlama linki e-posta adresinize gönderildi.";
+            ViewBag.Message = "Şifre sıfırlama linki e-posta adresinize gönderildi.";
             return Redirect("/Home/Login");
         }
 
@@ -310,7 +313,7 @@ namespace TradeWave.Controllers
 
             if (existingCoin == null)
             {
-                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID) , CoinSymbol = coin.CoinSymbol , CoinName = coin.CoinName });
+                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID), CoinSymbol = coin.CoinSymbol, CoinName = coin.CoinName });
                 await _context.SaveChangesAsync();
                 return Ok();
             }
@@ -327,7 +330,7 @@ namespace TradeWave.Controllers
 
             var coinToRemove = await _context.Watchlistuser.FirstOrDefaultAsync(c => c.UserID == Convert.ToInt32(sessionUserID) && c.CoinName == coin.CoinName);
             if (coinToRemove != null)
-             {
+            {
                 _context.Watchlistuser.Remove(coinToRemove);
                 await _context.SaveChangesAsync();
                 return Ok();
@@ -374,6 +377,75 @@ namespace TradeWave.Controllers
             // Login sayfasına yönlendir
             return RedirectToAction("Login", "Home");
         }
+        [Authorize]
+        [HttpPost("follow")]
+        public async Task<IActionResult> Follow([FromBody] Watchlistuser model)
+        {
+            // UserID'yi alıyoruz
+            var userId = model.UserID;  // Frontend'den alınan UserID
+
+            // Kullanıcının sadece kendi watchlist'ini eklemesine izin veriyoruz
+            var existing = await _context.Watchlistuser
+                .FirstOrDefaultAsync(w => w.UserID == userId && w.CoinId == model.CoinId);
+
+            if (existing != null)
+            {
+                return BadRequest("Coin already followed.");
+            }
+
+            _context.Watchlistuser.Add(model);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [Authorize]
+        // Takibi Bırak (Remove from Watchlist)
+        [HttpDelete("unfollow")]
+        public async Task<IActionResult> UnfollowCoin(int userId, string coinId)
+        {
+            var watch = await _context.Watchlistuser
+                .FirstOrDefaultAsync(w => w.UserID == userId && w.CoinId == coinId);
+
+            if (watch == null)
+                return NotFound("Coin bulunamadı.");
+
+            _context.Watchlistuser.Remove(watch);
+            await _context.SaveChangesAsync();
+            return Ok("Coin takibi bırakıldı.");
+        }
+
+        // Kullanıcının watchlist'ini getir
+        [HttpGet("getWatchlist")]
+        public async Task<IActionResult> GetWatchlist(int userId)
+        {
+            var userWatchlist = await _context.Watchlistuser
+                .Where(w => w.UserID == userId)  // Sadece kullanıcının kendi watchlist'i
+                .Include(w => w.User)
+                .ToListAsync();
+
+            return Ok(userWatchlist);
+        }
+        [Authorize]
+        public async Task<IActionResult> CoinDetail(string id)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetAsync($"https://api.coingecko.com/api/v3/coins/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var a = response.StatusCode;
+
+                    return NotFound(a);
+                }
+                
+
+                var json = await response.Content.ReadAsStringAsync();
+                var coin = JsonConvert.DeserializeObject<CoinDetailViewModel>(json);
+
+                return View(coin);
+            }
+        }
+
         private string HashPassword(string NewPassword)
         {
             using (SHA256 sha256 = SHA256.Create())

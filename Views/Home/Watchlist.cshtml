@@ -66,6 +66,10 @@
         .trade-button:hover {
             background: #334155;
         }
+
+        .remove-button {
+            background: #e11d48;
+        }
     </style>
 </head>
 <body>
@@ -94,7 +98,7 @@
         // Sunucudan veri al ve tabloyu oluştur
         function getWatchlistData() {
             console.log("İçerdeyim brom");
-            fetch("https://localhost:7283/Home/GetWatchlist", {
+            fetch("https://localhost:5267/Home/GetWatchlist", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -124,7 +128,7 @@
         }
 
         async function removeFromWatchlist(coinName) {
-            await fetch("https://localhost:7283/Home/RemoveFromWatchlist", {
+            await fetch("https://localhost:5267/Home/RemoveFromWatchlist", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

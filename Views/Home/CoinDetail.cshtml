@@ -1,0 +1,148 @@
+@model CoinDetailViewModel
+@{
+    ViewData["Title"] = $"{Model.Name} ({Model.Symbol.ToUpper()}) - Trade";
+    var currentPrice = Model.MarketData.CurrentPrice["usd"];
+    var priceChange = Model.MarketData.PriceChangePercentage24h;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Real-time trading view for @Model.Name." />
+    <meta name="keywords" content="crypto, trade, coin, @Model.Symbol" />
+    <meta name="author" content="YourAppName" />
+    <title>@ViewData["Title"]</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+    <div class="flex flex-col lg:flex-row gap-6 p-6 min-h-screen">
+        <!-- Left Column -->
+        <div class="flex-1 space-y-6">
+            <!-- Chart Box -->
+            <div class="bg-white rounded-2xl p-6 shadow">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold">@Model.Name (@Model.Symbol.ToUpper())</h2>
+                    <span class="text-lg font-semibold @(priceChange >= 0 ? "text-green-600" : "text-red-600")">
+                        $@currentPrice.ToString("N2") (@priceChange.ToString("F2")%)
+                    </span>
+                </div>
+
+                <!-- Timeframes -->
+                <div class="flex gap-2 mt-4">
+                    @{
+                        var timeframes = new[] { "1H", "4H", "1D", "1W" };
+                    }
+                    @foreach (var tf in timeframes)
+                    {
+                        <button class="px-3 py-1 rounded text-sm font-medium transition bg-gray-200 hover:bg-gray-300"
+                                onclick="selectTimeframe('@tf')"
+                                id="btn-@tf">@tf</button>
+                    }
+                </div>
+
+                <!-- Chart Placeholder -->
+                <div class="mt-6 h-64 bg-gray-100 rounded flex items-center justify-center text-gray-500">
+                    Trading Chart View
+                </div>
+            </div>
+
+            <!-- Order Book -->
+            <div class="bg-white rounded-2xl p-6 shadow">
+                <h3 class="text-lg font-semibold mb-3">Order Book</h3>
+                <table class="w-full text-sm">
+                    <thead class="border-b font-medium text-left">
+                        <tr>
+                            <th>Price (USDT)</th>
+                            <th>Amount (BTC)</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b"><td>$46,790.00</td><td>0.2345</td><td>10,972.26</td></tr>
+                        <tr class="border-b"><td>$46,789.50</td><td>0.1123</td><td>5,254.36</td></tr>
+                        <tr><td>$46,789.00</td><td>0.3467</td><td>16,221.85</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="w-full lg:w-[320px] space-y-6">
+            <!-- Buy/Sell -->
+            <div class="bg-white rounded-2xl p-6 shadow">
+                <div class="flex border-b mb-4">
+                    <button class="pb-1 mr-4 font-semibold border-b-2 border-black" id="buyButton" onclick="toggleBuySell('buy')">Buy</button>
+                    <button class="pb-1 text-gray-500 hover:text-black" id="sellButton" onclick="toggleBuySell('sell')">Sell</button>
+                </div>
+
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-600">Price</label>
+                        <input type="text" class="w-full px-3 py-2 mt-1 border rounded bg-gray-100" value="@currentPrice.ToString("N2")" readonly />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-600">Amount</label>
+                        <input type="number" step="0.0001" id="amountInput" oninput="calculateTotal()"
+                            class="w-full px-3 py-2 mt-1 border rounded" placeholder="0.00" />
+                    </div>
+
+                    <p class="text-right text-sm">Total: <strong id="totalDisplay">0.00 USDT</strong></p>
+
+                    <button type="submit"
+                        class="w-full py-2 bg-black text-white rounded font-semibold">
+                        Buy @Model.Symbol.ToUpper()
+                    </button>
+                </form>
+            </div>
+
+            <!-- Open Orders -->
+            <div class="bg-white rounded-2xl p-6 shadow">
+                <h3 class="text-lg font-semibold mb-3">Open Orders</h3>
+                <div class="text-gray-500 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6h13M9 11l-4 4m0 0l4 4m-4-4h16" />
+                    </svg>
+                    <span>No open orders</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedTimeframe = "4H";
+
+        function selectTimeframe(tf) {
+            selectedTimeframe = tf;
+            document.querySelectorAll("[id^='btn-']").forEach(btn => btn.classList.remove("bg-gray-300"));
+            document.getElementById(`btn-${tf}`).classList.add("bg-gray-300");
+        }
+
+        function toggleBuySell(panel) {
+            const buyBtn = document.getElementById("buyButton");
+            const sellBtn = document.getElementById("sellButton");
+
+            if (panel === "buy") {
+                buyBtn.classList.add("text-black", "font-semibold", "border-b-2", "border-black");
+                sellBtn.classList.remove("text-black", "font-semibold", "border-b-2", "border-black");
+                sellBtn.classList.add("text-gray-500");
+            } else {
+                sellBtn.classList.add("text-black", "font-semibold", "border-b-2", "border-black");
+                buyBtn.classList.remove("text-black", "font-semibold", "border-b-2", "border-black");
+                buyBtn.classList.add("text-gray-500");
+            }
+        }
+
+        function calculateTotal() {
+            const price = parseFloat("@currentPrice");
+            const amount = parseFloat(document.getElementById("amountInput").value);
+            const total = (!isNaN(price) && !isNaN(amount)) ? (price * amount).toFixed(2) : "0.00";
+            document.getElementById("totalDisplay").textContent = `${total} USDT`;
+        }
+    </script>
+
+</body>
+</html>

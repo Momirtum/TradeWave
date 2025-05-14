@@ -1,5 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@{
+    ViewData["Title"] = "Markets";
+}
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Markets</title>
@@ -22,13 +26,13 @@
             flex: 1 1 300px;
         }
 
-            .search-container input {
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                outline: none;
-            }
+        .search-container input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+        }
 
         .markets-buttons {
             display: flex;
@@ -72,7 +76,8 @@
             min-width: 600px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 15px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
@@ -102,9 +107,9 @@
             transition: background 0.3s;
         }
 
-            .trade-button:hover {
-                background: #334155;
-            }
+        .trade-button:hover {
+            background: #334155;
+        }
 
         .positive {
             color: green;
@@ -146,13 +151,16 @@
                 justify-content: center;
             }
 
-            .search-container, .markets-buttons {
+            .search-container,
+            .markets-buttons {
                 flex: 1 1 100%;
             }
         }
 
         @@media (max-width: 480px) {
-            th, td {
+
+            th,
+            td {
                 padding: 10px;
                 font-size: 14px;
             }
@@ -169,6 +177,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="markets-header">
@@ -197,6 +206,18 @@
             </thead>
             <tbody id="marketTable">
                 <!-- Veriler dinamik olarak buraya eklenecek -->
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><a href="/Home/CoinDetail/ethereum" class="text-blue-500 hover:underline">Detay</a></td>
+                <td>
+                    <button class="trade-button" style="background: ${inWatchlist ? '#e11d48' : '#1e293b'}"
+                        onclick="toggleWatchlist(${JSON.stringify(coin).replace(/" /g, '&quot;' )})">
+                        ${inWatchlist ? 'Takipten Çıkar' : 'Takip Et'}
+                    </button>
+                </td>
             </tbody>
         </table>
         <div id="pagination" style="text-align: center; margin-top: 20px;"></div>
@@ -212,30 +233,29 @@
         // Veritabanındaki watchlist'i yükle
         function fetchWatchlist() {
             console.log("İçerdeyim brom");
-            fetch("https://localhost:7283/Home/GetWatchlist", {
+            fetch("https://localhost:5267/Home/GetWatchlist", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 credentials: "include"
             })
-            .then(res => res.json())
-            .then(data => {
-                watchlist = data;
-                fetchCoins()
-            })
-            .catch(error => {
-                console.error('Watchlist alınırken hata oluştu:', error);
-            });
+                .then(res => res.json())
+                .then(data => {
+                    watchlist = data;
+                    fetchCoins()
+                })
+                .catch(error => {
+                    console.error('Watchlist alınırken hata oluştu:', error);
+                });
         }
 
         // DOM yüklendiğinde çalıştır
         document.addEventListener("DOMContentLoaded", fetchWatchlist);
-
         // Tüm coin'leri al
         async function fetchCoins() {
             try {
-                const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
+                const res = await fetch('https://api.coingecko.com/çapi/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false');
                 coins = await res.json();
                 filteredCoins = coins;
                 renderTable();
@@ -251,7 +271,7 @@
 
             if (!inWatchlist) {
                 // Coin'i veritabanına ekle
-                await fetch("https://localhost:7283/Home/AddToWatchlist", {
+                await fetch("https://localhost:5267/Home/AddToWatchlist", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -267,7 +287,7 @@
                 });
             } else {
                 // Coin'i veritabanından çıkar
-                await fetch('https://localhost:7283/Home/RemoveFromWatchlist', {
+                await fetch('https://localhost:5267/Home/RemoveFromWatchlist', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -315,7 +335,7 @@
                         <td class="${changeClass}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
                         <td>$${(coin.total_volume / 1e9).toFixed(2)}B</td>
                         <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
-                        <td><button class="trade-button">Trade</button></td>
+                        <td><a href="/Home/CoinDetail/${coin.CoinId}" class="text-blue-500 hover:underline">Detay</a></td>
                         <td>
                             <button class="trade-button" style="background: ${inWatchlist ? '#e11d48' : '#1e293b'}"
                                 onclick="toggleWatchlist(${JSON.stringify(coin).replace(/"/g, '&quot;')})">
@@ -374,4 +394,5 @@
     </script>
 
 </body>
+
 </html>
