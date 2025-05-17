@@ -3,37 +3,30 @@
     ViewData["Title"] = $"{Model.Name} ({Model.Symbol.ToUpper()}) - Trade";
     var currentPrice = Model.MarketData.CurrentPrice["usd"];
     var priceChange = Model.MarketData.PriceChangePercentage24h;
+    ViewBag.Symbol = Model.Symbol.ToUpper();
+    ViewBag.CoinName = Model.Name;
 }
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Real-time trading view for @Model.Name." />
-    <meta name="keywords" content="crypto, trade, coin, @Model.Symbol" />
-    <meta name="author" content="YourAppName" />
     <title>@ViewData["Title"]</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-100 text-gray-900">
-
     <div class="flex flex-col lg:flex-row gap-6 p-6 min-h-screen">
         <!-- Left Column -->
         <div class="flex-1 space-y-6">
-            <!-- Chart Box -->
+            <!-- Price & Chart -->
             <div class="bg-white rounded-2xl p-6 shadow">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold">@Model.Name (@Model.Symbol.ToUpper())</h2>
+                    <h2 class="text-xl font-bold">@Model.Name (@ViewBag.Symbol)</h2>
                     <span class="text-lg font-semibold @(priceChange >= 0 ? "text-green-600" : "text-red-600")">
-                        <span class="price-value">$@currentPrice.ToString("N2")</span>
-                        <span class="price-change">(@priceChange.ToString("F2")%)</span>
+                        $@currentPrice.ToString("N2") (@priceChange.ToString("F2")%)
                     </span>
                 </div>
-
-                <!-- Timeframes -->
                 <div class="flex gap-2 mt-4">
                     @{
                         var timeframes = new[] { "1H", "4H", "1D", "1W" };
@@ -44,8 +37,6 @@
                             onclick="selectTimeframe('@tf')" id="btn-@tf">@tf</button>
                     }
                 </div>
-
-                <!-- Chart Placeholder -->
                 <div class="mt-6 h-[500px]">
                     <div id="tradingview_widget" class="rounded-2xl overflow-hidden"></div>
                 </div>
@@ -53,39 +44,45 @@
 
             <!-- Order Book -->
             <div class="bg-white rounded-2xl p-6 shadow">
-                <h3 class="text-lg font-semibold mb-3">Order Book</h3>
-                <table class="w-full text-sm">
-                    <thead class="border-b font-medium text-left">
-                        <tr>
-                            <th>Price (USDT)</th>
-                            <th>Amount (BTC)</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b">
-                            <td>$46,790.00</td>
-                            <td>0.2345</td>
-                            <td>10,972.26</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td>$46,789.50</td>
-                            <td>0.1123</td>
-                            <td>5,254.36</td>
-                        </tr>
-                        <tr>
-                            <td>$46,789.00</td>
-                            <td>0.3467</td>
-                            <td>16,221.85</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h3 class="text-lg font-semibold mb-3">Trade History</h3>
+                @if (Model.Trades != null && Model.Trades.Any())
+                {
+                    <table class="w-full text-sm">
+                        <thead class="border-b font-medium text-left">
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var trade in Model.Trades.OrderByDescending(t => t.AddedTime))
+                            {
+                                <tr class="border-b">
+                                    <td>@trade.AddedTime.ToString("g")</td>
+                                    <td class="@(trade.TradeType == "Buy" ? "text-green-600" : "text-red-600")">
+                                        @trade.TradeType
+                                    </td>
+                                    <td>@((trade.TotalInvestment / trade.PriceWhenAdded).ToString("F4"))</td>
+                                    <td>$@trade.PriceWhenAdded.ToString("F2")</td>
+                                    <td>$@trade.TotalInvestment.ToString("F2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-gray-500">No trade history found.</p>
+                }
             </div>
         </div>
 
         <!-- Right Column -->
         <div class="w-full lg:w-[320px] space-y-6">
-            <!-- Buy/Sell -->
+            <!-- Buy/Sell Form -->
             <div class="bg-white rounded-2xl p-6 shadow">
                 <div class="flex border-b mb-4">
                     <button class="pb-1 mr-4 font-semibold border-b-2 border-black" id="buyButton"
@@ -94,7 +91,8 @@
                         onclick="toggleBuySell('sell')">Sell</button>
                 </div>
 
-                <form class="space-y-4">
+                <form id="tradeForm" class="space-y-4">
+                    <input type="hidden" id="tradeTypeInput" value="Buy" />
                     <div>
                         <label class="block text-sm text-gray-600">Price</label>
                         <input type="text" class="w-full px-3 py-2 mt-1 border rounded bg-gray-100"
@@ -111,30 +109,14 @@
 
                     <button type="submit" id="actionButton"
                         class="w-full py-2 bg-black text-white rounded font-semibold transition-colors duration-200 hover:bg-green-700">
-                        <span id="actionText">Buy @Model.Symbol.ToUpper()</span>
+                        <span id="actionText">Buy @ViewBag.Symbol</span>
                     </button>
-
-
-
-
                 </form>
-            </div>
-
-            <!-- Open Orders -->
-            <div class="bg-white rounded-2xl p-6 shadow">
-                <h3 class="text-lg font-semibold mb-3">Open Orders</h3>
-                <div class="text-gray-500 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-6h13M9 11l-4 4m0 0l4 4m-4-4h16" />
-                    </svg>
-                    <span>No open orders</span>
-                </div>
             </div>
         </div>
     </div>
 
+    <!-- JavaScript -->
     <script>
         let selectedTimeframe = "4H";
 
@@ -142,35 +124,48 @@
             selectedTimeframe = tf;
             document.querySelectorAll("[id^='btn-']").forEach(btn => btn.classList.remove("bg-gray-300"));
             document.getElementById(`btn-${tf}`).classList.add("bg-gray-300");
+
+            document.getElementById("tradingview_widget").innerHTML = "";
+            new TradingView.widget({
+                container_id: "tradingview_widget",
+                width: "100%",
+                height: 500,
+                symbol: "@ViewBag.Symbol" + "USDT",
+                interval: tf === "1H" ? "60" : tf === "4H" ? "240" : tf === "1D" ? "D" : "W",
+                timezone: "Etc/UTC",
+                theme: "light",
+                style: "1",
+                locale: "en",
+                toolbar_bg: "#f1f3f6",
+                enable_publishing: false,
+                hide_top_toolbar: true,
+                hide_legend: false
+            });
         }
 
-        function toggleBuySell(panel) {
+        function toggleBuySell(type) {
             const buyBtn = document.getElementById("buyButton");
             const sellBtn = document.getElementById("sellButton");
             const actionText = document.getElementById("actionText");
+            const tradeTypeInput = document.getElementById("tradeTypeInput");
             const actionButton = document.getElementById("actionButton");
 
-            if (panel === "buy") {
-                buyBtn.classList.add("text-black", "font-semibold", "border-b-2", "border-black");
-                sellBtn.classList.remove("text-black", "font-semibold", "border-b-2", "border-black");
-                sellBtn.classList.add("text-gray-500");
-
-                actionText.textContent = "Buy @Model.Symbol.ToUpper()";
+            if (type === "buy") {
+                tradeTypeInput.value = "Buy";
+                actionText.textContent = "Buy @ViewBag.Symbol";
+                buyBtn.classList.add("border-black", "font-semibold");
+                sellBtn.classList.remove("border-black", "font-semibold");
                 actionButton.classList.remove("hover:bg-red-700");
                 actionButton.classList.add("hover:bg-green-700");
-
             } else {
-                sellBtn.classList.add("text-black", "font-semibold", "border-b-2", "border-black");
-                buyBtn.classList.remove("text-black", "font-semibold", "border-b-2", "border-black");
-                buyBtn.classList.add("text-gray-500");
-
-                actionText.textContent = "Sell @Model.Symbol.ToUpper()";
+                tradeTypeInput.value = "Sell";
+                actionText.textContent = "Sell @ViewBag.Symbol";
+                sellBtn.classList.add("border-black", "font-semibold");
+                buyBtn.classList.remove("border-black", "font-semibold");
                 actionButton.classList.remove("hover:bg-green-700");
                 actionButton.classList.add("hover:bg-red-700");
             }
         }
-
-
 
         function calculateTotal() {
             const price = parseFloat("@currentPrice");
@@ -178,68 +173,46 @@
             const total = (!isNaN(price) && !isNaN(amount)) ? (price * amount).toFixed(2) : "0.00";
             document.getElementById("totalDisplay").textContent = `${total} USDT`;
         }
-    </script>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-        new TradingView.widget({
-            "container_id": "tradingview_widget",
-            "width": "100%",
-            "height": 500,
-            "symbol": "@Model.Symbol.ToUpper()USDT", // örn: BTCUSDT
-            "interval": selectedTimeframe === "1H" ? "60" :
-                selectedTimeframe === "4H" ? "240" :
-                    selectedTimeframe === "1D" ? "D" :
-                        selectedTimeframe === "1W" ? "W" : "60",
-            "timezone": "Etc/UTC",
-            "theme": "light",
-            "style": "1",
-            "locale": "en",
-            "toolbar_bg": "#f1f3f6",
-            "enable_publishing": false,
-            "hide_top_toolbar": true,
-            "hide_legend": false,
-            "save_image": false,
-            "studies": [],
-            "show_popup_button": true,
-            "popup_width": "1000",
-            "popup_height": "650"
+
+        document.getElementById("tradeForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const price = parseFloat("@currentPrice");
+            const amount = parseFloat(document.getElementById("amountInput").value);
+            const total = price * amount;
+            const tradeType = document.getElementById("tradeTypeInput").value;
+
+            const tradeData = {
+                CoinName: "@ViewBag.CoinName",
+                CoinSymbol: "@ViewBag.Symbol",
+                PriceWhenAdded: price,
+                CurrentPrice: price,
+                PriceChangePercentage24h: @priceChange,
+                TotalInvestment: total,
+                CurrentValue: total,
+                ProfitLoss: 0,
+                TradeType: tradeType
+            };
+
+            fetch("/Home/CoinDetail", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(tradeData)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Trade başarıyla kaydedildi!");
+                        window.location.reload();
+                    } else {
+                        alert("Bir hata oluştu.");
+                    }
+                })
+                .catch(error => console.error("Trade Hatası:", error));
         });
+
+        // İlk yüklemede varsayılan timeframe
+        window.onload = () => selectTimeframe("4H");
     </script>
-    <script>
-        function selectTimeframe(tf) {
-            selectedTimeframe = tf;
-            document.querySelectorAll("[id^='btn-']").forEach(btn => btn.classList.remove("bg-gray-300"));
-            document.getElementById(`btn-${tf}`).classList.add("bg-gray-300");
-
-            // Yeniden çizim için sayfayı yeniden yükle veya widget'i yeniden başlat
-            document.getElementById("tradingview_widget").innerHTML = ""; // Mevcut widget'ı temizle
-            new TradingView.widget({
-                "container_id": "tradingview_widget",
-                "width": "100%",
-                "height": 500,
-                "symbol": "@Model.Symbol.ToUpper()USDT",
-                "interval": tf === "1H" ? "60" :
-                    tf === "4H" ? "240" :
-                        tf === "1D" ? "D" :
-                            tf === "1W" ? "W" : "60",
-                "timezone": "Etc/UTC",
-                "theme": "light",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#f1f3f6",
-                "enable_publishing": false,
-                "hide_top_toolbar": true,
-                "hide_legend": false,
-                "save_image": false,
-                "studies": [],
-                "show_popup_button": true,
-                "popup_width": "1000",
-                "popup_height": "650"
-            });
-        }
-    </script>
-
-
+    <script src="https://s3.tradingview.com/tv.js"></script>
 </body>
 
 </html>

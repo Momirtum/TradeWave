@@ -16,6 +16,8 @@ namespace TradeWave.Models
 
         [JsonProperty("market_data")]
         public MarketData MarketData { get; set; }
+        public List<UserTrade> Trades { get; set; }
+        
     }
 
     public class MarketData

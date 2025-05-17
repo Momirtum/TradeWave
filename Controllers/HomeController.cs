@@ -70,6 +70,14 @@ namespace TradeWave.Controllers
                 var json = await response.Content.ReadAsStringAsync();
                 var coin = JsonConvert.DeserializeObject<CoinDetailViewModel>(json);
 
+                var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                int userId = int.Parse(sessionUserID);
+                var trades = _context.UserTrade
+                .Where(t => t.UserID == userId && t.CoinSymbol.ToLower() == coin.Symbol.ToLower())
+                .OrderByDescending(t => t.AddedTime)
+                .ToList();
+                 coin.Trades = trades;
+
                 return View(coin);
             }
         }
@@ -335,7 +343,7 @@ namespace TradeWave.Controllers
 
             if (existingCoin == null)
             {
-                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID), CoinSymbol = coin.CoinSymbol, CoinName = coin.CoinName , AddedTime = DateTime.UtcNow , PriceWhenAdded = coin.PriceWhenAdded });
+                _context.Watchlistuser.Add(new Watchlistuser { UserID = Convert.ToInt32(sessionUserID), CoinSymbol = coin.CoinSymbol, CoinName = coin.CoinName, AddedTime = DateTime.UtcNow, PriceWhenAdded = coin.PriceWhenAdded });
                 await _context.SaveChangesAsync();
                 return Ok();
             }
@@ -399,6 +407,25 @@ namespace TradeWave.Controllers
             // Login sayfasına yönlendir
             return RedirectToAction("Login", "Home");
         }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> CoinDetail([FromBody] UserTrade userTrade)
+        {
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            userTrade.UserID = Convert.ToInt32(sessionUserID);
+            userTrade.AddedTime = DateTime.UtcNow;
+
+            // Hesaplamalar (gerekirse burada eklenebilir)
+            userTrade.CurrentValue = userTrade.CurrentPrice * (userTrade.TotalInvestment / userTrade.PriceWhenAdded);
+            userTrade.ProfitLoss = userTrade.CurrentValue - userTrade.TotalInvestment;
+
+            _context.UserTrade.Add(userTrade);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
 
         private string HashPassword(string NewPassword)
         {
