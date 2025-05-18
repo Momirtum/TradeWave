@@ -57,6 +57,7 @@ namespace TradeWave.Controllers
         public async Task<IActionResult> CoinDetail(string id)
         {
             using (var httpClient = new HttpClient())
+
             {
                 var response = await httpClient.GetAsync($"https://api.coingecko.com/api/v3/coins/{id}");
                 if (!response.IsSuccessStatusCode)
@@ -412,20 +413,59 @@ namespace TradeWave.Controllers
         [Authorize]
         public async Task<IActionResult> CoinDetail([FromBody] UserTrade userTrade)
         {
-            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            userTrade.UserID = Convert.ToInt32(sessionUserID);
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(sessionUserID))
+                return Unauthorized();
+
+            int userId = Convert.ToInt32(sessionUserID);
+            userTrade.UserID = userId;
             userTrade.AddedTime = DateTime.UtcNow;
 
-            // Hesaplamalar (gerekirse burada eklenebilir)
-            userTrade.CurrentValue = userTrade.CurrentPrice * (userTrade.TotalInvestment / userTrade.PriceWhenAdded);
-            userTrade.ProfitLoss = userTrade.CurrentValue - userTrade.TotalInvestment;
+            // Satış ise bakiye kontrolü yap
+            
+            // Kullanıcının toplam sahip olduğu coin miktarını hesapla
+            var ownedAmount = await _context.UserTrade
+                .Where(t => t.UserID == userId && t.CoinSymbol == userTrade.CoinSymbol)
+                .GroupBy(t => t.CoinSymbol)
+                .Select(g => g.Where(t => t.TradeType == "Buy").Sum(t => t.CurrentValue / t.CurrentPrice) -
+                                g.Where(t => t.TradeType == "Sell").Sum(t => t.CurrentValue / t.CurrentPrice))
+                .FirstOrDefaultAsync();
 
-            _context.UserTrade.Add(userTrade);
-            await _context.SaveChangesAsync();
+            // Satılmak istenen miktarı hesapla
 
-            return Ok();
+            var sellingAmount = userTrade.TotalInvestment / userTrade.PriceWhenAdded;
+
+            if (userTrade.TradeType == "Sell")
+            {
+                if (ownedAmount < sellingAmount)
+                {
+                    return BadRequest(new { message = "Yetersiz bakiye. Satmak istediğiniz miktar mevcut değil. Sahip olduğunuz miktar : " + ownedAmount });
+                }
+                else
+                {
+                    // Hesaplamalar
+                    userTrade.CurrentValue = userTrade.CurrentPrice * (userTrade.TotalInvestment / userTrade.PriceWhenAdded);
+                    userTrade.ProfitLoss = userTrade.CurrentValue - userTrade.TotalInvestment;
+
+                    _context.UserTrade.Add(userTrade);
+                    await _context.SaveChangesAsync();
+
+                    return Ok();
+                }
+            }
+            else
+            {
+                // Hesaplamalar
+                userTrade.CurrentValue = userTrade.CurrentPrice * (userTrade.TotalInvestment / userTrade.PriceWhenAdded);
+                userTrade.ProfitLoss = userTrade.CurrentValue - userTrade.TotalInvestment;
+
+                _context.UserTrade.Add(userTrade);
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
         }
-
 
         private string HashPassword(string NewPassword)
         {
@@ -447,6 +487,75 @@ namespace TradeWave.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        [HttpGet]
+        [Route("Home/GetCurrentUserBalance")]
+        public async Task<IActionResult> GetCurrentUserBalance()
+        {
+            var doubleBalance = 0.0;
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+            var watchlist = await _context.UserTrade
+                .Where(w => w.UserID == Convert.ToInt32(sessionUserID))
+                .ToListAsync();
+
+            foreach (var item in watchlist)
+            {
+                if(item.TradeType == "Buy")
+                {
+                    doubleBalance += item.CurrentValue;
+                }else if(item.TradeType == "Sell")
+                {
+                    doubleBalance -= item.CurrentValue;
+                }
+            }
+
+            return Ok(doubleBalance);
+        }
+
+        [HttpGet]
+        [Route("Home/GetUserCoins")]
+        public async Task<IActionResult> GetUserCoins()
+        {
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(sessionUserID))
+                return Unauthorized();
+
+            int userId = Convert.ToInt32(sessionUserID);
+
+            var result = await _context.UserTrade
+                .Where(t => t.UserID == userId)
+                .GroupBy(t => t.CoinSymbol)
+                .Select(g => new UserCoinDto
+                {
+                    CoinSymbol = g.Key,
+                    Amount = (decimal)g.Where(t => t.TradeType == "Buy").Sum(t => t.CurrentValue / t.CurrentPrice) -
+                             (decimal)g.Where(t => t.TradeType == "Sell").Sum(t => t.CurrentValue / t.CurrentPrice),
+                    Balance = g.Where(t => t.TradeType == "Buy").Sum(t => t.CurrentValue) -
+                              g.Where(t => t.TradeType == "Sell").Sum(t => t.CurrentValue),
+                    CoinName = g.FirstOrDefault().CoinName,
+                })
+                .Where(c => c.Amount > 0)
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("Home/GetUserTransactionHistory")]
+        public async Task<IActionResult> GetUserTransactionHistory()
+        {
+            var sessionUserID = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            int userId = Convert.ToInt32(sessionUserID);
+
+            var result = await _context.UserTrade
+                .Where(t => t.UserID == userId)
+                .ToListAsync();
+
+            return Ok(result);
         }
 
     }

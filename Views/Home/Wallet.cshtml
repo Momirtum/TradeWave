@@ -5,161 +5,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Wallet Dashboard</title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #f5f7fa;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crypto Wallet</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
 
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            width: 100%;
-            margin-top: 3%;
-        }
+    body {
+      background-color: #f5f5f5;
+      color: #111;
+    }
 
-        .balance-card, .actions-card, .transactions-card, .wallet-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
+    /* Grid Layout */
+    .layout {
+      margin: 0;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
 
-        h1, h2 {
-            margin: 0 0 15px;
-            color: #333;
-        }
+    /* Card Style */
+    .card {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
 
-        .coins {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      transform: translateY(-3px);
+    }
 
-        .coin {
-            flex: 1;
-            background: #f0f2f5;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
+    /* Total Balance */
+    .balance-total {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
 
-        .actions-card button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+    /* Crypto Balances (Updated as Grid) */
+    .crypto-balances {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
 
-        .actions-card .send {
-            background-color: #4f46e5;
-            color: white;
-        }
+    .crypto {
+      background-color: #f1f1f1;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
 
-        .actions-card button:not(.send) {
-            background-color: #e0e0e0;
-        }
+    .crypto:hover {
+      background-color: #eaeaea;
+      transform: scale(1.02);
+    }
 
-        .actions-card button:hover {
-            opacity: 0.9;
-        }
+    .crypto b {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
 
-        .transactions-card .transaction {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
+    .crypto span {
+      font-size: 14px;
+      color: #555;
+    }
 
-        .amount {
-            font-weight: bold;
-        }
+    /* Quick Actions */
+    .quick-actions button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0a0a23;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
 
-            .amount.negative {
-                color: #e63946;
-            }
+    .quick-actions button:hover {
+      background-color: #1d1d3d;
+      transform: translateY(-2px);
+    }
 
-            .amount.positive {
-                color: #2a9d8f;
-            }
+    /* Transactions */
+    .transactions .tx {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 0;
+      transition: background-color 0.2s ease;
+    }
 
-        .wallet-card p {
-            word-break: break-word;
-            background: #f0f2f5;
-            padding: 10px;
-            border-radius: 10px;
-        }
+    .transactions .tx:hover {
+      background-color: #f8f8f8;
+    }
 
-        .copy {
-            margin-top: 10px;
-            padding: 10px;
-            background: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-    </style>
+    .tx-details {
+      font-size: 14px;
+    }
+
+    .tx-amount {
+      text-align: right;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* Wallet Address */
+    .wallet-address-box {
+      background-color: #f0f0f0;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      word-break: break-all;
+      margin-bottom: 10px;
+      transition: background-color 0.3s ease;
+    }
+
+    .wallet-address-box:hover {
+      background-color: #e6e6e6;
+    }
+
+    /* Copy Button */
+    .copy-btn {
+      width: 100%;
+      background-color: #ddd;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background-color: #c6c6c6;
+      transform: scale(1.03);
+    }
+
+    /* Responsive Layout */
+    @@media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .crypto-balances {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @@media (max-width: 600px) {
+      .crypto-balances {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
 </head>
 <body>
-    <div class="dashboard">
-        <div class="balance-card">
-            <h2>Total Balance</h2>
-            <h1>$24,586.45</h1>
-            <div class="coins">
-                <div class="coin">
-                    <h3>Bitcoin</h3>
-                    <p>0.8945 BTC</p>
-                    <span>$16,234.23</span>
-                </div>
-                <div class="coin">
-                    <h3>Ethereum</h3>
-                    <p>4.234 ETH</p>
-                    <span>$8,352.22</span>
-                </div>
-            </div>
-        </div>
 
-        <div class="actions-card">
-            <h2>Quick Actions</h2>
-            <button class="send">Send</button>
-            <button>Receive</button>
-            <button>Swap</button>
+  <div class="layout">
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="card">
+        <div class="balance-total"></div>
+        <div class="crypto-balances">
+            <!-- Bura kişinin koinler geleyi -->
         </div>
+      </div>
 
-        <div class="transactions-card">
-            <h2>Recent Transactions</h2>
-            <div class="transaction">
-                <div>
-                    <p>Sent Bitcoin</p>
-                    <span>Jan 15, 2025</span>
-                </div>
-                <div class="amount negative">-0.234 BTC ($4,322.43)</div>
-            </div>
-            <div class="transaction">
-                <div>
-                    <p>Received Ethereum</p>
-                    <span>Jan 14, 2025</span>
-                </div>
-                <div class="amount positive">+2.456 ETH ($4,687.34)</div>
-            </div>
-        </div>
-
-        <div class="wallet-card">
-            <h2>Wallet Address</h2>
-            <p>0x71C7656EC7ab88b098def57B49f0b1656d8976F</p>
-            <button class="copy">Copy Address</button>
-        </div>
+      <div class="card transactions">
+        <h3>Recent Transactions</h3>
+            <!-- Bura kişinin işlem geçmişi geleyi -->
+      </div>
     </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="card quick-actions">
+        <h3>Quick Actions</h3>
+        <button>🚀 Send</button>
+        <button>⬇ Receive</button>
+        <button>🔄 Swap</button>
+      </div>
+
+      <div class="card">
+        <h3>Wallet Address</h3>
+        <div class="wallet-address-box">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</div>
+        <button class="copy-btn">📋 Copy Address</button>
+      </div>
+    </div>
+  </div>
+    <script>
+        function getCurrentUserData() {
+            fetch("https://localhost:7283/Home/GetCurrentUserBalance", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include"
+            })
+            .then(res => res.json())
+            .then(data => {
+                const rawBalance = Number(data);
+
+                // Sayı geçerliyse formatla, değilse 0.00 göster
+                const balance = isNaN(rawBalance)
+                    ? "0.00"
+                    : rawBalance.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                // DOM'a yaz
+                const balanceElement = document.querySelector(".balance-total");
+                if (balanceElement) {
+                    balanceElement.textContent = `Total Balance: $${balance}`;
+                }
+            })
+            .catch(error => {
+                console.error('Bakiye alınırken hata oluştu:', error);
+            });
+
+            fetch("https://localhost:7283/Home/GetUserCoins", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include"
+            })
+            .then(res => res.json())
+            .then(data => {
+                const container = document.querySelector(".crypto-balances");
+                container.innerHTML = ""; // Önce alanı temizle
+
+                data.forEach(coin => {
+                    const symbol = coin.coinSymbol;
+                    const name = coin.coinName;
+                    const amount = parseFloat(coin.amount);
+                    const usdValue = parseFloat(coin.balance).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    const div = document.createElement("div");
+                    div.classList.add("crypto");
+
+                    div.innerHTML = `
+                    <b>${amount} ${symbol}</b>
+                    <span>$${usdValue}</span><br>
+                    <small>${name}</small>
+                    `;
+
+                    container.appendChild(div);
+                });
+
+            })
+            .catch(error => {
+                console.error('Bakiye alınırken hata oluştu:', error);
+            });
+
+            fetch("https://localhost:7283/Home/GetUserTransactionHistory", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include"
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                    const container = document.querySelector(".transactions"); // Burada .transactions div’inin içini dolduracağız
+                    container.innerHTML = "<h3>Recent Transactions</h3>"; // Başlığı koruyup temizle
+
+                    data.forEach(tx => {
+                    const type = tx.tradeType === "Buy" ? "Received" : "Sent";
+                    const symbol = tx.coinSymbol;
+                    const name = tx.coinName;
+                    const value = parseFloat(tx.currentValue);
+                    const price = parseFloat(tx.currentPrice);
+                    const amount = value / price;
+                    const usdValue = value.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    const date = new Date(tx.addedTime);
+                    const formattedDate = date.toLocaleDateString("en-US", {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+
+                    const div = document.createElement("div");
+                    div.classList.add("tx");
+
+                    div.innerHTML = `
+                    <div class="tx-details">
+                        <strong>${type} ${name}</strong><br>
+                        ${formattedDate}
+                    </div>
+                    <div class="tx-amount">
+                        ${tx.tradeType === "Buy" ? "+" : "-"}${amount.toFixed(4)} ${symbol}<br>
+                        $${usdValue}
+                    </div>
+                    `;
+
+                    container.appendChild(div);
+                    });
+
+            })
+            .catch(error => {
+                console.error('Bakiye alınırken hata oluştu:', error);
+            });
+
+
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            getCurrentUserData();
+        });
+    </script>
+
 </body>
 </html>

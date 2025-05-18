@@ -174,8 +174,9 @@
             document.getElementById("totalDisplay").textContent = `${total} USDT`;
         }
 
-        document.getElementById("tradeForm").addEventListener("submit", function (e) {
+        document.getElementById("tradeForm").addEventListener("submit", async function (e) {
             e.preventDefault();
+
             const price = parseFloat("@currentPrice");
             const amount = parseFloat(document.getElementById("amountInput").value);
             const total = price * amount;
@@ -193,21 +194,26 @@
                 TradeType: tradeType
             };
 
-            fetch("/Home/CoinDetail", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(tradeData)
-            })
-                .then(response => {
-                    if (response.ok) {
-                        alert("Trade başarıyla kaydedildi!");
-                        window.location.reload();
-                    } else {
-                        alert("Bir hata oluştu.");
-                    }
-                })
-                .catch(error => console.error("Trade Hatası:", error));
+            try {
+                const response = await fetch("/Home/CoinDetail", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(tradeData)
+                });
+
+                if (response.ok) {
+                    alert("Trade başarıyla kaydedildi!");
+                    window.location.reload();
+                } else {
+                    const errorResponse = await response.json();
+                    alert(errorResponse.message);
+                }
+            } catch (error) {
+                console.error("Trade Hatası:", error);
+                showErrorMessage("Bir hata oluştu.");
+            }
         });
+
 
         // İlk yüklemede varsayılan timeframe
         window.onload = () => selectTimeframe("4H");
